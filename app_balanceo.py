@@ -19,7 +19,7 @@ with col_logo2:
     except:
         st.info("ℹ️ Logo no encontrado.")
 
-st.markdown("<h1 style='text-align: center;'>⚖️ Balanceo: Trituradora 405CR01</h1>", unsafe_Error=True)
+st.markdown("<h1 style='text-align: center;'>⚖️ Balanceo: Trituradora 405CR01</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
 
 # --- FUNCIONES MATEMÁTICAS ---
