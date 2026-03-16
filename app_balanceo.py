@@ -50,7 +50,7 @@ with tab1:
         
         st.divider()
         st.header("📥 Mediciones")
-        v1 = st.number_input("Vibración Inicial (V1)", value=3.0, step=0.1)
+        v1 = st.number_input("Vibración Inicial (V1 mm/s)", value=3.0, step=0.1)
         st.divider()
         meds = []
         for i in range(2, 5):
