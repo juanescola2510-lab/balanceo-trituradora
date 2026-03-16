@@ -120,7 +120,7 @@ with tab1:
                 hora_actual = datetime.now().strftime("%H:%M:%S")
                 pdf = FPDF()
                 pdf.add_page()
-                try: pdf.image("logo.jpeg", x=85, y=10, w=40)
+                try: pdf.image("LOGOUNACEM.jpeg", x=85, y=10, w=40)
                 except: pass
                 pdf.ln(45)
                 pdf.set_font("Arial", "B", 16)
