@@ -19,7 +19,7 @@ with col_logo2:
     except:
         st.info("ℹ️ Logo 'LOGOUNACEM.jpg' no encontrado.")
 
-st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>⚖️ Sistema de Balanceo Trituradora</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1E3A8A;'> Sistema de Balanceo Trituradora⚖️</h1>", unsafe_allow_html=True)
 
 # --- 2. CREACIÓN DE PESTAÑAS ---
 tab1, tab2 = st.tabs(["📊 Calculador de Balanceo", "📖 Procedimiento Técnico"])
