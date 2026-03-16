@@ -14,10 +14,10 @@ st.set_page_config(page_title="Balanceo Trituradora 405CR01", layout="centered")
 col_logo1, col_logo2, col_logo3 = st.columns([1, 2, 1])
 with col_logo2:
     try:
-        imagen = Image.open("logo.jpeg") 
+        imagen = Image.open("LOGOUNACEM.jpg") 
         st.image(imagen, width=200) 
     except:
-        st.info("ℹ️ Logo 'logo.jpeg' no encontrado.")
+        st.info("ℹ️ Logo 'LOGOUNACEM.jpg' no encontrado.")
 
 st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>⚖️ Sistema de Balanceo Trituradora</h1>", unsafe_allow_html=True)
 
