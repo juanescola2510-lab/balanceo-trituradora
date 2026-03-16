@@ -55,8 +55,8 @@ with tab1:
         meds = []
         for i in range(2, 5):
             st.subheader(f"Medición {i}")
-            v = st.number_input(f"Vibración (V{i})", value=4.0, key=f"v{i}")
-            p = st.number_input(f"Peso Prueba (P{i})", value=10.0, key=f"p{i}")
+            v = st.number_input(f"Vibración (V{i} mm/s)", value=4.0, key=f"v{i}")
+            p = st.number_input(f"Peso Prueba (P{i} gramos)", value=10.0, key=f"p{i}")
             a = st.number_input(f"Ángulo (°)", value=(i-2)*120.0, key=f"a{i}")
             meds.append({'v': v, 'p': p, 'a': a})
 
