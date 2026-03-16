@@ -156,8 +156,7 @@ with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
     st.markdown("""
     Este método (basado en el método de las 4 carreras sin fase) se utiliza cuando no se dispone de un sensor de fase (fotocelda).
-    ⚠️ **Seguridad:** Asegúrese de que el equipo esté completamente bloqueado (LOTO) antes de ingresar a colocar los pesos.
-    """)
+   
     ### 1. Medición Inicial (V1)
     *   Arranque la trituradora y mida el nivel de vibración global en el punto de apoyo.
     *   Anote este valor como **Vibración Inicial (V1)**.
@@ -178,7 +177,8 @@ with tab2:
     *   Dado que la trituradora usa **eyectores a 72°**, el software distribuirá el peso total entre los dos eyectores más cercanos al punto de corrección.
     *   Suelde o fije los pesos según la **Acción Recomendada** en color verde.
     
-    
+     ⚠️ **Seguridad:** Asegúrese de que el equipo esté completamente bloqueado (LOTO) antes de ingresar a colocar los pesos.
+    """)
 
 # Botón Limpiar en Sidebar
 if st.sidebar.button("🗑️ Limpiar Pantalla"):
