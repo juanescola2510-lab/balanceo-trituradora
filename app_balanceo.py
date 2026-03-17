@@ -16,7 +16,7 @@ col_logo1, col_logo2, col_logo3 = st.columns([1, 2, 1])
 with col_logo2:
     try:
         imagen = Image.open("LOGOUNACEM.jpg") 
-        st.image(imagen, width=150) 
+        st.image(imagen, width=200) 
     except:
         st.info("ℹ️ Logo 'LOGOUNACEM.jpg' no encontrado.")
 
@@ -27,7 +27,7 @@ tab1, tab2 = st.tabs(["📊 Calculador de Balanceo", "📖 Procedimiento Técnic
 
 # --- FUNCIONES DE SOPORTE ---
 def limpiar_pantalla():
-    """Función para resetear todos los valores de forma segura"""
+    """Función Callback para resetear todos los valores de forma segura"""
     st.session_state["tec_val"] = None
     st.session_state["v1_val"] = None
     for i in range(2, 5):
@@ -59,7 +59,6 @@ with tab1:
         fecha_hoy = st.date_input("Fecha", date.today())
         
         st.divider()
-        # Botón con CALLBACK para evitar el error de StreamlitAPIException
         st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
 
         st.header("📥 Mediciones")
@@ -89,13 +88,11 @@ with tab1:
             for e in errores: st.write(f"* {e}")
         else:
             try:
-                # 1. Centros de los círculos
                 centros = []
                 for m in meds:
                     rad = math.radians(m['a'])
                     centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-                # 2. Intersecciones
                 i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
                 i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
                 i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
@@ -118,7 +115,6 @@ with tab1:
                     p_prueba_avg = sum(m['p'] for m in meds) / 3
                     peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                     
-                    # Distribución Eyectores 72°
                     sector = 72
                     lim_bajo = math.floor(ang_res / sector) * sector
                     lim_alto = lim_bajo + sector
@@ -126,7 +122,6 @@ with tab1:
                     p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
                     p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
 
-                    # 3. Gráfico
                     fig, ax = plt.subplots(figsize=(7,7))
                     for i in range(3):
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
@@ -136,15 +131,16 @@ with tab1:
                     lim_max = max([m['v'] + v1 for m in meds]) * 1.1
                     for e in range(6):
                         ang_e = math.radians(e * 72)
-                        ax.plot([0, -lim_max*math.sin(ang_e)], [0, lim_max*math.cos(ang_e)], 'gray', lw=0.5, ls=':')
+                        ex, ey = -lim_max * math.sin(ang_e), lim_max * math.cos(ang_e)
+                        ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls=':')
+                        ax.text(ex*1.05, ey*1.05, f"{e*72}°", ha='center', fontsize=9)
                     
                     ax.set_aspect('equal'); ax.set_xlim(-lim_max, lim_max); ax.set_ylim(-lim_max, lim_max)
                     st.pyplot(fig)
 
                     instruccion = f"MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
-                    st.success(f"✅ **ACCIÓN:** {instruccion}")
+                    st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # 4. PDF
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
@@ -155,31 +151,67 @@ with tab1:
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                         pdf.set_font("Arial", "", 10)
                         pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
-                        pdf.cell(90, 8, f"Fecha: {fecha_hoy}", ln=True, align='R')
+                        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {datetime.now().strftime('%H:%M')}", ln=True, align='R')
                         
                         pdf.ln(5); pdf.set_fill_color(230,230,230)
-                        pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES", ln=True, fill=True)
+                        pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES DE PRUEBA", ln=True, fill=True)
+                        pdf.cell(63, 7, "Punto", 1); pdf.cell(63, 7, "Vibración (mm/s)", 1); pdf.cell(64, 7, "Peso Prueba (g)", 1, ln=True)
+                        pdf.set_font("Arial", "", 10)
                         for i, m in enumerate(meds, 2):
-                            pdf.cell(0, 7, f"V{i}: {m['v']} mm/s | Peso: {m['p']}g | Ang: {m['a']}°", 1, ln=True)
+                            pdf.cell(63, 7, f"V{i}", 1); pdf.cell(63, 7, str(m['v']), 1); pdf.cell(64, 7, str(m['p']), 1, ln=True)
 
                         pdf.ln(5); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " RESULTADOS", ln=True, fill=True)
                         pdf.set_font("Arial", "", 10)
-                        pdf.cell(100, 7, f"Peso Total Corrección: {round(peso_total, 2)} g", 1, ln=True)
-                        pdf.multi_cell(0, 8, f"INSTRUCCIÓN: {instruccion}", border=1)
+                        pdf.cell(100, 7, "Vibración Inicial (V1):", 1); pdf.cell(90, 7, f"{v1} mm/s", 1, ln=True)
+                        pdf.cell(100, 7, "Peso Total Corrección:", 1); pdf.cell(90, 7, f"{round(peso_total, 2)} g", 1, ln=True)
+                        pdf.multi_cell(0, 10, f"INSTRUCCIÓN DE MONTAJE: {instruccion}", border=1)
 
                         img_buf = io.BytesIO()
-                        fig.savefig(img_buf, format='png', dpi=120); img_buf.seek(0)
+                        fig.savefig(img_buf, format='png', dpi=150); img_buf.seek(0)
                         with open("temp_p.png", "wb") as f: f.write(img_buf.read())
                         pdf.image("temp_p.png", x=45, y=pdf.get_y()+10, w=120)
                         return pdf.output(dest='S').encode('latin-1')
 
                     st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf")
                 else:
-                    st.error("❌ Los círculos no se cortan. Revise los datos.")
+                    st.error("❌ Los círculos no se cortan. Aumente el peso de prueba para generar un cambio mayor.")
             except Exception as ex:
                 st.error(f"Error en el proceso: {ex}")
 
-# --- PESTAÑA 2 ---
+# --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
-    st.header("📋 Procedimiento Técnico")
-    st.error("**PROTOCOLO DE SEGURIDAD:** 1. Informar a Planta Eléctrica. 2. Congelar sensores en Panel. 3. Bloqueo LOTO total.")
+    st.header("📋 Procedimiento de Balanceo en 4 Puntos")
+    
+    # --- SECCIÓN DE SEGURIDAD PRIORITARIA ---
+    st.subheader("⚠️ Protocolo de Seguridad Obligatorio")
+    st.error("""
+    **ANTES DE INICIAR CUALQUIER TAREA:**
+    1.  **Comunicación Eléctrica:** Informar a la **Planta Eléctrica** que se iniciarán los trabajos de balanceo en la trituradora.
+    2.  **Gestión de Sensores:** Comunicarse con **Panel de Control** para solicitar que se **congelen los sensores de vibración** del equipo para evitar disparos falsos.
+    3.  **Bloqueo y Etiquetado (LOTO):** Al momento de colocar o retirar los pesos de prueba, el equipo debe estar **totalmente apagado, desenergizado y bloqueado**. ¡Nunca manipule el rotor en movimiento!
+    """)
+
+    st.divider()
+
+    # --- PASOS DEL PROCEDIMIENTO ---
+    st.markdown("""
+    ### 1. Medición Inicial (V1)
+    *   Arranque la trituradora y mida el nivel de vibración global en el punto de apoyo.
+    *   Anote este valor como **Vibración Inicial (V1)**.
+    
+    ### 2. Colocación de Pesos de Prueba
+    Se deben realizar 3 mediciones adicionales colocando un peso conocido en ángulos específicos:
+    *   **Medición V2:** Coloque el peso de prueba en **0°**.
+    *   **Medición V3:** Coloque el peso de prueba en **120°**.
+    *   **Medición V4:** Coloque el peso de prueba en **240°**.
+    *   *Nota: Asegúrese de retirar el peso anterior antes de colocar el siguiente.*
+    
+    ### 3. Ingreso de Datos
+    *   Ingrese los valores de vibración obtenidos en cada corrida en la pestaña **Calculador**.
+    *   El software generará un triángulo de intersección cuyo centro representa el vector de desbalance.
+    
+    ### 4. Ejecución de la Corrección
+    *   El sistema calculará el **Peso Total** necesario.
+    *   Dado que la trituradora usa **eyectores a 72°**, el software distribuirá el peso total entre los dos eyectores más cercanos al punto de corrección.
+    *   Suelde o fije los pesos según la **Acción Recomendada** en color verde.
+    """)
