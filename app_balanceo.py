@@ -152,11 +152,26 @@ with tab1:
             st.error("❌ Intersección no válida.")
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
+
 with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
+
+    # --- SECCIÓN DE SEGURIDAD PRIORITARIA ---
+    st.subheader("⚠️ Protocolo de Seguridad Obligatorio")
+    
+    # Usamos un contenedor con color para resaltar la importancia
+    with st.container():
+        st.error("""
+        **ANTES DE INICIAR CUALQUIER TAREA:**
+        1.  **Comunicación Eléctrica:** Informar a la **Planta Eléctrica** que se iniciarán los trabajos de balanceo en la trituradora.
+        2.  **Gestión de Sensores:** Comunicarse con **Panel de Control** para solicitar que se **congelen los sensores de vibración** del equipo para evitar disparos falsos o alarmas innecesarias.
+        3.  **Bloqueo y Etiquetado (LOTO):** Al momento de colocar o retirar los pesos de prueba, el equipo debe estar **totalmente apagado, desenergizado y bloqueado** siguiendo el estándar de seguridad. ¡Nunca manipule el rotor en movimiento!
+        """)
+
+    st.divider()
+
+    # --- PASOS DEL PROCEDIMIENTO ---
     st.markdown("""
-    Este método (basado en el método de las 4 carreras sin fase) se utiliza cuando no se dispone de un sensor de fase (fotocelda).
-   
     ### 1. Medición Inicial (V1)
     *   Arranque la trituradora y mida el nivel de vibración global en el punto de apoyo.
     *   Anote este valor como **Vibración Inicial (V1)**.
@@ -166,20 +181,17 @@ with tab2:
     *   **Medición V2:** Coloque el peso de prueba en **0°**.
     *   **Medición V3:** Coloque el peso de prueba en **120°**.
     *   **Medición V4:** Coloque el peso de prueba en **240°**.
-    *   *Nota: Asegúrese de retirar el peso anterior antes de colocar el siguiente.*
+    *   *Nota: Recuerde retirar el peso de prueba anterior antes de pasar a la siguiente posición.*
     
     ### 3. Ingreso de Datos
-    *   Ingrese los valores de vibración obtenidos en cada corrida en la pestaña **Calculador**.
-    *   El software generará un triángulo de intersección cuyo centro representa el vector de desbalance.
+    *   Ingrese los valores de vibración obtenidos en la pestaña **Calculador**.
+    *   El software procesará las intersecciones para encontrar el vector de desbalance real.
     
     ### 4. Ejecución de la Corrección
-    *   El sistema calculará el **Peso Total** necesario.
-    *   Dado que la trituradora usa **eyectores a 72°**, el software distribuirá el peso total entre los dos eyectores más cercanos al punto de corrección.
-    *   Suelde o fije los pesos según la **Acción Recomendada** en color verde.
-    
-     ⚠️ **Seguridad:** Asegúrese de que el equipo esté completamente bloqueado (LOTO) antes de ingresar a colocar los pesos.
+    *   El sistema calculará el **Peso Total** y su ubicación.
+    *   Debido a la configuración de la trituradora con **eyectores a 72°**, el software le indicará cómo distribuir el peso entre los dos eyectores más próximos.
+    *   Siga la **Acción Recomendada** para la soldadura o fijación final.
     """)
-
 # Botón Limpiar en Sidebar
 if st.sidebar.button("🗑️ Limpiar Pantalla"):
     st.rerun()
