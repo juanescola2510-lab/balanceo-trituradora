@@ -43,22 +43,46 @@ with tab1:
         return 0.5 * abs(p1[0]*(p2[1] - p3[1]) + p2[0]*(p3[1] - p1[1]) + p3[0]*(p1[1] - p2[1]))
 
     # --- ENTRADA DE DATOS (BARRA LATERAL) ---
-    with st.sidebar:
-        st.header("👤 Datos del Servicio")
-        tecnico = st.text_input("Técnico Responsable", "Ing. Juan Granja")
-        fecha_hoy = st.date_input("Fecha", date.today())
+with st.sidebar:
+    st.header("👤 Datos del Servicio")
+    tecnico = st.text_input("Técnico Responsable", value="Ing. Juan Granja")
+    fecha_hoy = st.date_input("Fecha", date.today())
+    
+    st.divider()
+    st.header("📥 Mediciones")
+    
+    # Vibración inicial con placeholder para que se vea opaco
+    v1 = st.number_input("Vibración Inicial (V1)", 
+                         value=None, 
+                         placeholder="Ej: 3.0 mm/s", 
+                         step=0.1)
+    
+    st.divider()
+    meds = []
+    for i in range(2, 5):
+        st.subheader(f"Medición {i}")
         
-        st.divider()
-        st.header("📥 Mediciones")
-        v1 = st.number_input("Vibración Inicial (V1 mm/s)", value=3.0, step=0.1)
-        st.divider()
-        meds = []
-        for i in range(2, 5):
-            st.subheader(f"Medición {i}")
-            v = st.number_input(f"Vibración (V{i} mm/s)", value=4.0, key=f"v{i}")
-            p = st.number_input(f"Peso Prueba (P{i} gramos)", value=10.0, key=f"p{i}")
-            a = st.number_input(f"Ángulo (°)", value=(i-2)*120.0, key=f"a{i}")
-            meds.append({'v': v, 'p': p, 'a': a})
+        # Vibración con unidad en el placeholder
+        v = st.number_input(f"Vibración V{i}", 
+                            value=None, 
+                            placeholder="0.0 mm/s", 
+                            key=f"v{i}")
+        
+        # Peso con unidad en el placeholder
+        p = st.number_input(f"Peso Prueba P{i}", 
+                            value=None, 
+                            placeholder="0.0 gramos", 
+                            key=f"p{i}")
+        
+        # Ángulo por defecto (aquí sí mantenemos el valor para guiar al usuario)
+        angulo_sugerido = (i-2)*120.0
+        a = st.number_input(f"Ángulo", 
+                            value=float(angulo_sugerido), 
+                            format="%.1f",
+                            help="Grados (°)",
+                            key=f"a{i}")
+        
+        meds.append({'v': v, 'p': p, 'a': a})
 
     # --- PROCESAMIENTO ---
     if st.button("CALCULAR BALANCEO Y GENERAR PDF", type="primary"):
