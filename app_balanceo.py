@@ -16,7 +16,7 @@ col_logo1, col_logo2, col_logo3 = st.columns([1, 2, 1])
 with col_logo2:
     try:
         imagen = Image.open("LOGOUNACEM.jpg") 
-        st.image(imagen, width=200) 
+        st.image(imagen, width=150) 
     except:
         st.info("ℹ️ Logo 'LOGOUNACEM.jpg' no encontrado.")
 
