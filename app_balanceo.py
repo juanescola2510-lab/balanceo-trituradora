@@ -130,49 +130,48 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
+# --- PEGAR ESTO JUSTO DEBAJO DE TU LÍNEA 131 ---
 
-# --- REEMPLAZA TODO TU BLOQUE DE GRÁFICO CON ESTO ---
-try:
-    fig, ax = plt.subplots(figsize=(8, 8))
-    
-    # 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
-    ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-                arrowprops=dict(facecolor='red', edgecolor='red', width=2, headwidth=10))
+# 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
+ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+            arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
 
-    # 2. POSICIONAMIENTO DINÁMICO (EVITA CRUCES)
-    # Calculamos un margen para que el texto "salte" fuera de la punta del vector
-    margen = lim_max * 0.2
-    tx = bx + (margen if bx >= 0 else -margen)
-    ty = by + (margen if by >= 0 else -margen)
+# 2. CÁLCULO DE POSICIÓN DINÁMICA (EVITA QUE SE CRUCEN)
+offset_x = lim_max * 0.25 if bx >= 0 else -lim_max * 0.25
+offset_y = lim_max * 0.25 if by >= 0 else -lim_max * 0.25
 
-    # Alineación automática para alejar el cuadro del centro
-    h_align = 'left' if bx >= 0 else 'right'
-    v_align = 'bottom' if by >= 0 else 'top'
+ha_val = 'left' if bx >= 0 else 'right'
+va_val = 'bottom' if by >= 0 else 'top'
 
-    # 3. ETIQUETA CON CUADRO BLANCO
-    ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-            color='red', fontweight='bold', fontsize=11, 
-            ha=h_align, va=v_align,
-            bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.5'))
+# 3. ETIQUETA FLOTANTE CON CUADRO (BBOX)
+ax.text(bx + offset_x, by + offset_y, 
+        f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
+        color='red', fontweight='bold', fontsize=11, 
+        ha=ha_val, va=va_val,
+        bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.6'))
 
-    # 4. EJES Y CÍRCULOS DE REFERENCIA
-    for deg in range(0, 360, 60):
-        rad = math.radians(deg)
-        ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
-        ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls='--')
-        ax.text(ex * 1.1, ey * 1.1, f"{deg}°", ha='center', va='center', fontweight='bold')
+# 4. EJES ANGULARES (CADA 60°)
+for deg in range(0, 360, 60):
+    rad = math.radians(deg)
+    ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
+    ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls='--')
+    ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
+            fontsize=10, color='black', fontweight='bold')
 
-    # 5. AJUSTE DE LÍMITES PARA QUE NADA SE CORTE
-    ax.set_aspect('equal')
-    ax.set_xlim(-lim_max * 1.6, lim_max * 1.6)
-    ax.set_ylim(-lim_max * 1.6, lim_max * 1.6)
-    ax.axis('off')
-    
-    st.pyplot(fig)
+# 5. CONFIGURACIÓN DE LÍMITES Y VISTA
+ax.set_aspect('equal')
+lim_vista = lim_max * 1.7
+ax.set_xlim(-lim_vista, lim_vista)
+ax.set_ylim(-lim_vista, lim_vista)
+ax.axis('off') 
 
+st.pyplot(fig)
+
+# --- ESTO ES LO QUE CIERRA EL TRY QUE TIENES ABIERTO ARRIBA ---
 except Exception as e:
-    # ESTO ES LO QUE ELIMINA EL SYNTAX ERROR DE TU IMAGEN
-    st.error(f"Error en la visualización: {e}")             
+    st.error(f"Error en la ejecución: {e}")
+
+           
                        
 
                     # 4. Generación de PDF
