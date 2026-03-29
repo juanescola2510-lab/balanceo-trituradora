@@ -52,32 +52,32 @@ def calcular_area(p1, p2, p3):
 with tab1:
     st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
     
-    # --- BARRA LATERAL ---
-with st.sidebar:
-    st.header("👤 Datos del Servicio")
-    # Texto opaco para el nombre del técnico
-    tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Nombre del técnico", key="tec_val")
-    fecha_hoy = st.date_input("Fecha", date.today())
-    
-    st.divider()
-    st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
-
-    st.header("📥 Mediciones")
-    # Texto opaco para vibración mm/s
-    v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", step=0.1, key="v1_val")
-    
-    st.divider()
-    meds = []
-    for i in range(2, 5):
-        st.subheader(f"Medición {i}")
-        # Texto opaco para vibración mm/s
-        v = st.number_input(f"Vibración V{i}", value=None, placeholder="mm/s", key=f"v{i}_val")
-        # Texto opaco para peso gramos
-        p = st.number_input(f"Peso Prueba P{i}", value=None, placeholder="gramos", key=f"p{i}_val")
+        # --- BARRA LATERAL ---
+    with st.sidebar:
+        st.header("👤 Datos del Servicio")
+        # Texto opaco para el nombre del técnico
+        tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Nombre del técnico", key="tec_val")
+        fecha_hoy = st.date_input("Fecha", date.today())
         
-        a_def = float((i-2)*120.0)
-        a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
-        meds.append({'v': v, 'p': p, 'a': a})
+        st.divider()
+        st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
+    
+        st.header("📥 Mediciones")
+        # Texto opaco para vibración mm/s
+        v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", step=0.1, key="v1_val")
+        
+        st.divider()
+        meds = []
+        for i in range(2, 5):
+            st.subheader(f"Medición {i}")
+            # Texto opaco para vibración mm/s
+            v = st.number_input(f"Vibración V{i}", value=None, placeholder="mm/s", key=f"v{i}_val")
+            # Texto opaco para peso gramos
+            p = st.number_input(f"Peso Prueba P{i}", value=None, placeholder="gramos", key=f"p{i}_val")
+            
+            a_def = float((i-2)*120.0)
+            a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
+            meds.append({'v': v, 'p': p, 'a': a})
 
     # --- BOTÓN DE PROCESAMIENTO ---
     if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
