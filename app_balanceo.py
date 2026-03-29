@@ -130,38 +130,48 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
- # Vector de desbalance
-ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=2, headwidth=10))
-# 1. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA
-# Usamos un offset para que el texto no toque la punta de la flecha
-offset = lim_max * 0.1  
-tx = bx + (offset if bx >= 0 else -offset)
-ty = by + (offset if by >= 0 else -offset)
+# --- COPIA DESDE AQUÍ ---
+try:
+    # Vector de desbalance
+    ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                arrowprops=dict(facecolor='red', edgecolor='red', width=2, headwidth=10))
 
-# Alineación dinámica según el cuadrante
-ha = 'left' if bx >= 0 else 'right'
-va = 'bottom' if by >= 0 else 'top'
+    # 1. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA
+    offset = lim_max * 0.2  # Aumentado un poco para mayor claridad
+    tx = bx + (offset if bx >= 0 else -offset)
+    ty = by + (offset if by >= 0 else -offset)
 
-# 2. ETIQUETA MEJORADA (SIN CRUCES)
-ax.text(tx, ty, f" Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-        color='red', fontweight='bold', fontsize=11, 
-        ha=ha, va=va,
-        bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1, boxstyle='round,pad=0.5'))
+    # Alineación dinámica según el cuadrante
+    ha = 'left' if bx >= 0 else 'right'
+    va = 'bottom' if by >= 0 else 'top'
 
-# 3. EJES ANGULARES (CORREGIDOS A 60° PARA CUBRIR 360°)
-for deg in range(0, 360, 60):
-    rad = math.radians(deg)
-    # Si tu 0° es arriba (estilo balanceo mecánico común):
-    ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
-    ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls='--')
-    ax.text(ex*1.1, ey*1.1, f"{deg}°", ha='center', va='center', fontsize=9, color='gray')
+    # 2. ETIQUETA MEJORADA (SIN CRUCES)
+    ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
+            color='red', fontweight='bold', fontsize=11, 
+            ha=ha, va=va,
+            bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.5'))
 
-# 4. CONFIGURACIÓN FINAL
-ax.set_aspect('equal')
-ax.set_xlim(-lim_max * 1.3, lim_max * 1.3) # Más espacio para que no corte el texto
-ax.set_ylim(-lim_max * 1.3, lim_max * 1.3)
-ax.axis('off') # Limpia el recuadro exterior para que se vea más profesional
-st.pyplot(fig)
+    # 3. EJES ANGULARES (CORREGIDOS A 60° PARA CUBRIR 360°)
+    for deg in range(0, 360, 60):
+        rad = math.radians(deg)
+        ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
+        ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls='--')
+        ax.text(ex*1.15, ey*1.15, f"{deg}°", ha='center', va='center', fontsize=9, color='black', fontweight='bold')
+
+    # 4. CONFIGURACIÓN FINAL
+    ax.set_aspect('equal')
+    # Ajustamos el límite para que el texto siempre quepa
+    r_lim = lim_max * 1.5
+    ax.set_xlim(-r_lim, r_lim)
+    ax.set_ylim(-r_lim, r_lim)
+    ax.axis('off') 
+    
+    # Renderizar en Streamlit
+    st.pyplot(fig)
+
+except Exception as e:
+    st.error(f"Error al generar el gráfico: {e}")
+# --- HASTA AQUÍ ---
  
                    
                        
