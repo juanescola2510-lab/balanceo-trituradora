@@ -172,9 +172,7 @@ except Exception as e:
     # ESTO ES LO QUE SOLUCIONA EL SYNTAX ERROR
     st.error(f"Error en la visualización: {e}")
 # --- FIN DEL BLOQUE ---
-Usa el código con precaución.
-
-¿Por qué esto soluciona el problema?                   
+             
                        
 
                     # 4. Generación de PDF
