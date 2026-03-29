@@ -130,49 +130,45 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
-# --- PEGAR ESTO JUSTO DEBAJO DE TU LÍNEA 131 ---
+# --- REEMPLAZA DESDE LA LÍNEA DONDE EMPIEZA TU 'try:' CON ESTO ---
+try:
+    # 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
+    ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
 
-# 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
-ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-            arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
+    # 2. CÁLCULO DE POSICIÓN DINÁMICA (PARA QUE NO SE CRUCEN)
+    # El texto se aleja de la punta del vector (bx, by)
+    dist_offset = lim_max * 0.25
+    tx = bx + (dist_offset if bx >= 0 else -dist_offset)
+    ty = by + (dist_offset if by >= 0 else -dist_offset)
 
-# 2. CÁLCULO DE POSICIÓN DINÁMICA (EVITA QUE SE CRUCEN)
-offset_x = lim_max * 0.25 if bx >= 0 else -lim_max * 0.25
-offset_y = lim_max * 0.25 if by >= 0 else -lim_max * 0.25
+    # 3. ETIQUETA FLOTANTE CON CUADRO (BBOX)
+    ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
+            color='red', fontweight='bold', fontsize=11, 
+            ha=('left' if bx >= 0 else 'right'), 
+            va=('bottom' if by >= 0 else 'top'),
+            bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.6'))
 
-ha_val = 'left' if bx >= 0 else 'right'
-va_val = 'bottom' if by >= 0 else 'top'
+    # 4. EJES ANGULARES (CADA 60°)
+    for deg in range(0, 360, 60):
+        rad = math.radians(deg)
+        ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
+        ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls='--')
+        ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
+                fontsize=10, color='black', fontweight='bold')
 
-# 3. ETIQUETA FLOTANTE CON CUADRO (BBOX)
-ax.text(bx + offset_x, by + offset_y, 
-        f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-        color='red', fontweight='bold', fontsize=11, 
-        ha=ha_val, va=va_val,
-        bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.6'))
+    # 5. CONFIGURACIÓN DE LÍMITES Y VISTA
+    ax.set_aspect('equal')
+    lim_vista = lim_max * 1.8 # Margen extra para que el cuadro de texto no se corte
+    ax.set_xlim(-lim_vista, lim_vista)
+    ax.set_ylim(-lim_vista, lim_vista)
+    ax.axis('off') 
 
-# 4. EJES ANGULARES (CADA 60°)
-for deg in range(0, 360, 60):
-    rad = math.radians(deg)
-    ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
-    ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls='--')
-    ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
-            fontsize=10, color='black', fontweight='bold')
+    st.pyplot(fig)
 
-# 5. CONFIGURACIÓN DE LÍMITES Y VISTA
-ax.set_aspect('equal')
-lim_vista = lim_max * 1.7
-ax.set_xlim(-lim_vista, lim_vista)
-ax.set_ylim(-lim_vista, lim_vista)
-ax.axis('off') 
-
-st.pyplot(fig)
-
-# --- ESTO ES LO QUE CIERRA EL TRY QUE TIENES ABIERTO ARRIBA ---
+# --- ESTO ES LO QUE ELIMINA EL SYNTAX ERROR ---
 except Exception as e:
-    st.error(f"Error en la ejecución: {e}")
-
-           
-                       
+    st.error(f"Error en la visualización: {e}")
 
                     # 4. Generación de PDF
                     def export_pdf():
