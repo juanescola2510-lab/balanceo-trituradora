@@ -201,11 +201,11 @@ def export_pdf():
         pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
         return pdf.output(dest='S').encode('latin-1')
 
-    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf")
-else:
-    st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
-except Exception as ex:
-    st.error(f"Error en el proceso: {ex}")
+        st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf")
+    else:
+        st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
+    except Exception as ex:
+        st.error(f"Error en el proceso: {ex}")
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
