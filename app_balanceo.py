@@ -171,41 +171,41 @@ with tab1:
 
 
                     # 4. Generación de PDF
-                    def export_pdf():
-                        pdf = FPDF()
-                        pdf.add_page()
-                        if os.path.exists("LOGOUNACEM.jpg"):
-                            pdf.image("LOGOUNACEM.jpg", x=85, y=10, w=40)
-                        pdf.ln(40); pdf.set_font("Arial", "B", 16)
-                        pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
-                        pdf.set_font("Arial", "", 10)
-                        pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
-                        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {datetime.now().strftime('%H:%M')}", ln=True, align='R')
+def export_pdf():
+        pdf = FPDF()
+        pdf.add_page()
+        if os.path.exists("LOGOUNACEM.jpg"):
+            pdf.image("LOGOUNACEM.jpg", x=85, y=10, w=40)
+        pdf.ln(40); pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
+        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {datetime.now().strftime('%H:%M')}", ln=True, align='R')
                         
-                        pdf.ln(5); pdf.set_fill_color(230,230,230)
-                        pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES DE PRUEBA", ln=True, fill=True)
-                        pdf.set_font("Arial", "", 10)
-                        pdf.cell(63, 7, "Punto", 1); pdf.cell(63, 7, "Vibración (mm/s)", 1); pdf.cell(64, 7, "Peso (g)", 1, ln=True)
-                        for i, m in enumerate(meds, 2):
-                            pdf.cell(63, 7, f"V{i}", 1); pdf.cell(63, 7, str(m['v']), 1); pdf.cell(64, 7, str(m['p']), 1, ln=True)
+        pdf.ln(5); pdf.set_fill_color(230,230,230)
+        pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES DE PRUEBA", ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(63, 7, "Punto", 1); pdf.cell(63, 7, "Vibración (mm/s)", 1); pdf.cell(64, 7, "Peso (g)", 1, ln=True)
+        for i, m in enumerate(meds, 2):
+            pdf.cell(63, 7, f"V{i}", 1); pdf.cell(63, 7, str(m['v']), 1); pdf.cell(64, 7, str(m['p']), 1, ln=True)
 
-                        pdf.ln(5); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " RESULTADOS FINAL", ln=True, fill=True)
-                        pdf.set_font("Arial", "", 10)
-                        pdf.cell(100, 7, "Vibración Inicial (V1):", 1); pdf.cell(90, 7, f"{v1} mm/s", 1, ln=True)
-                        pdf.cell(100, 7, "Peso Total Corrección:", 1); pdf.cell(90, 7, f"{round(peso_total, 2)} g", 1, ln=True)
-                        pdf.multi_cell(0, 8, f"INSTRUCCIÓN DE MONTAJE: {instruccion}", border=1)
+        pdf.ln(5); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " RESULTADOS FINAL", ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(100, 7, "Vibración Inicial (V1):", 1); pdf.cell(90, 7, f"{v1} mm/s", 1, ln=True)
+        pdf.cell(100, 7, "Peso Total Corrección:", 1); pdf.cell(90, 7, f"{round(peso_total, 2)} g", 1, ln=True)
+        pdf.multi_cell(0, 8, f"INSTRUCCIÓN DE MONTAJE: {instruccion}", border=1)
 
-                        img_buf = io.BytesIO()
-                        fig.savefig(img_buf, format='png', dpi=150); img_buf.seek(0)
-                        with open("temp_plt.png", "wb") as f: f.write(img_buf.read())
-                        pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
-                        return pdf.output(dest='S').encode('latin-1')
+        img_buf = io.BytesIO()
+        fig.savefig(img_buf, format='png', dpi=150); img_buf.seek(0)
+        with open("temp_plt.png", "wb") as f: f.write(img_buf.read())
+        pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
+        return pdf.output(dest='S').encode('latin-1')
 
-                    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf")
-                else:
-                    st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
-            except Exception as ex:
-                st.error(f"Error en el proceso: {ex}")
+    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf")
+else:
+    st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
+except Exception as ex:
+    st.error(f"Error en el proceso: {ex}")
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
