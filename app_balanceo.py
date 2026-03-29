@@ -56,7 +56,7 @@ with tab1:
     with st.sidebar:
         st.header("👤 Datos del Servicio")
         # Texto opaco para el nombre del técnico
-        tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Nombre del técnico", key="tec_val")
+        tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
         fecha_hoy = st.date_input("Fecha", date.today())
         
         st.divider()
