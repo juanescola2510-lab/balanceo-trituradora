@@ -130,49 +130,49 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
-# --- COPIA DESDE AQUÍ HASTA EL FINAL ---
+
+# --- REEMPLAZA TODO TU BLOQUE DE GRÁFICO CON ESTO ---
 try:
+    fig, ax = plt.subplots(figsize=(8, 8))
+    
     # 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
     ax.annotate('', xy=(bx, by), xytext=(0, 0), 
                 arrowprops=dict(facecolor='red', edgecolor='red', width=2, headwidth=10))
 
-    # 2. POSICIONAMIENTO DINÁMICA DE LA ETIQUETA
-    # Aumentamos el margen (offset) para que el texto "flote" lejos de la punta
-    offset_dist = lim_max * 0.25 
-    tx = bx + (offset_dist if bx >= 0 else -offset_dist)
-    ty = by + (offset_dist if by >= 0 else -offset_dist)
+    # 2. POSICIONAMIENTO DINÁMICO (EVITA CRUCES)
+    # Calculamos un margen para que el texto "salte" fuera de la punta del vector
+    margen = lim_max * 0.2
+    tx = bx + (margen if bx >= 0 else -margen)
+    ty = by + (margen if by >= 0 else -margen)
 
-    # Alineación automática para que el cuadro no tape el vector
+    # Alineación automática para alejar el cuadro del centro
     h_align = 'left' if bx >= 0 else 'right'
     v_align = 'bottom' if by >= 0 else 'top'
 
-    # 3. CUADRO DE TEXTO (ETIQUETA)
+    # 3. ETIQUETA CON CUADRO BLANCO
     ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
             color='red', fontweight='bold', fontsize=11, 
             ha=h_align, va=v_align,
             bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.5'))
 
-    # 4. EJES ANGULARES (CUBREN LOS 360°)
+    # 4. EJES Y CÍRCULOS DE REFERENCIA
     for deg in range(0, 360, 60):
         rad = math.radians(deg)
         ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
         ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls='--')
-        ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
-                fontsize=10, color='black', fontweight='bold')
+        ax.text(ex * 1.1, ey * 1.1, f"{deg}°", ha='center', va='center', fontweight='bold')
 
-    # 5. AJUSTES FINALES DEL PLANO
+    # 5. AJUSTE DE LÍMITES PARA QUE NADA SE CORTE
     ax.set_aspect('equal')
-    ax.set_xlim(-lim_max * 1.7, lim_max * 1.7) # Margen amplio para la etiqueta
-    ax.set_ylim(-lim_max * 1.7, lim_max * 1.7)
-    ax.axis('off') 
+    ax.set_xlim(-lim_max * 1.6, lim_max * 1.6)
+    ax.set_ylim(-lim_max * 1.6, lim_max * 1.6)
+    ax.axis('off')
     
     st.pyplot(fig)
 
 except Exception as e:
-    # ESTO ES LO QUE SOLUCIONA EL SYNTAX ERROR
-    st.error(f"Error en la visualización: {e}")
-# --- FIN DEL BLOQUE ---
-             
+    # ESTO ES LO QUE ELIMINA EL SYNTAX ERROR DE TU IMAGEN
+    st.error(f"Error en la visualización: {e}")             
                        
 
                     # 4. Generación de PDF
