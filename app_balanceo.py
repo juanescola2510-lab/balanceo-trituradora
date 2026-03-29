@@ -87,88 +87,88 @@ with tab1:
             st.error("⚠️ **Faltan datos obligatorios:**")
             for e in errores: st.write(f"* {e}")
         else:
-            try:
-                # 1. Centros de los círculos
-                centros = []
-                for m in meds:
-                    rad = math.radians(m['a'])
-                    centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
-
-                # 2. Intersecciones
-                i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
-                i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
-                i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
-
-                if i12 and i23 and i31:
-                    min_area = float('inf')
-                    mejor_tri = None
-                    for p1 in i12:
-                        for p2 in i23:
-                            for p3 in i31:
-                                area = calcular_area(p1, p2, p3)
-                                if area < min_area:
-                                    min_area = area
-                                    mejor_tri = (p1, p2, p3)
-
-                    bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
-                    mag_res = math.sqrt(bx**2 + by**2)
-                    ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
-                    
-                    p_prueba_avg = sum(m['p'] for m in meds) / 3
-                    peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
-                    
-                    sector = 72
-                    lim_bajo = math.floor(ang_res / sector) * sector
-                    lim_alto = lim_bajo + sector
-                    rad_total = math.radians(sector)
-                    p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
-                    p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
-
-                    # 3. Gráfico con Valores de Módulo y Ángulo
-                    fig, ax = plt.subplots(figsize=(8,8))
-                    for i in range(3):
-                        ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
-                    ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
-                    
-# --- REEMPLAZA DESDE LA LÍNEA 134 CON ESTO ---
+           # --- REEMPLAZA TODO TU BLOQUE DESDE EL PRIMER 'try:' CON ESTO ---
 try:
-    # 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
-    ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-                arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
+    # 1. Centros de los círculos
+    centros = []
+    for m in meds:
+        rad = math.radians(m['a'])
+        centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-    # 2. POSICIONAMIENTO DINÁMICO (PARA QUE NO SE CRUCEN)
-    # El texto se aleja de la punta del vector (bx, by)
-    dist_offset = lim_max * 0.25
-    tx = bx + (dist_offset if bx >= 0 else -dist_offset)
-    ty = by + (dist_offset if by >= 0 else -dist_offset)
+    # 2. Intersecciones
+    i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
+    i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
+    i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
-    # 3. ETIQUETA FLOTANTE CON CUADRO (BBOX)
-    ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-            color='red', fontweight='bold', fontsize=11, 
-            ha=('left' if bx >= 0 else 'right'), 
-            va=('bottom' if by >= 0 else 'top'),
-            bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.6'))
+    if i12 and i23 and i31:
+        min_area = float('inf')
+        mejor_tri = None
+        for p1 in i12:
+            for p2 in i23:
+                for p3 in i31:
+                    area = calcular_area(p1, p2, p3)
+                    if area < min_area:
+                        min_area = area
+                        mejor_tri = (p1, p2, p3)
 
-    # 4. EJES ANGULARES (CADA 60°)
-    for deg in range(0, 360, 60):
-        rad = math.radians(deg)
-        ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
-        ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls='--')
-        ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
-                fontsize=10, color='black', fontweight='bold')
+        bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
+        mag_res = math.sqrt(bx**2 + by**2)
+        ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
+        
+        p_prueba_avg = sum(m['p'] for m in meds) / 3
+        peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
+        
+        # 3. Gráfico con Valores de Módulo y Ángulo
+        fig, ax = plt.subplots(figsize=(8,8))
+        
+        # Dibujar círculos y triángulo
+        for i in range(3):
+            ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
+        ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
+        
+        # Límite para los ejes angulares
+        lim_max = max([m['v'] + v1 for m in meds] + [mag_res]) * 1.1
 
-    # 5. CONFIGURACIÓN DE LÍMITES Y VISTA
-    ax.set_aspect('equal')
-    lim_vista = lim_max * 1.8 # Margen extra para que el cuadro de texto no se corte
-    ax.set_xlim(-lim_vista, lim_vista)
-    ax.set_ylim(-lim_vista, lim_vista)
-    ax.axis('off') 
+        # DIBUJO DEL VECTOR RESULTANTE (ROJO)
+        ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                    arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
 
-    st.pyplot(fig)
+        # POSICIONAMIENTO DINÁMICO DE LA ETIQUETA (EVITA QUE SE CRUCEN)
+        off_dist = lim_max * 0.25
+        tx = bx + (off_dist if bx >= 0 else -off_dist)
+        ty = by + (off_dist if by >= 0 else -off_dist)
+
+        # ETIQUETA FLOTANTE CON CUADRO (BBOX)
+        ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
+                color='red', fontweight='bold', fontsize=11, 
+                ha=('left' if bx >= 0 else 'right'), 
+                va=('bottom' if by >= 0 else 'top'),
+                bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.6'))
+
+        # EJES ANGULARES (CADA 60°)
+        for deg in range(0, 360, 60):
+            rad = math.radians(deg)
+            ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
+            ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls='--')
+            ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
+                    fontsize=10, color='black', fontweight='bold')
+
+        # CONFIGURACIÓN FINAL DEL PLANO
+        ax.set_aspect('equal')
+        lim_vista = lim_max * 1.8
+        ax.set_xlim(-lim_vista, lim_vista)
+        ax.set_ylim(-lim_vista, lim_vista)
+        ax.axis('off') 
+
+        st.pyplot(fig)
+
+    else:
+        st.warning("No se encontraron intersecciones para formar el triángulo de balanceo.")
 
 except Exception as e:
-    # ESTO ES LO QUE ELIMINA EL SYNTAX ERROR DE LA LÍNEA 134
-    st.error(f"Error en la visualización: {e}")
+    # ESTO ES LO QUE SOLUCIONA EL SYNTAX ERROR DEFINITIVAMENTE
+    st.error(f"Error en el proceso de balanceo: {e}")
+
 
                     # 4. Generación de PDF
                     def export_pdf():
