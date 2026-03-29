@@ -7,6 +7,8 @@ import os
 from PIL import Image
 from fpdf import FPDF
 from datetime import date, datetime
+import pytz
+
 
 # Configuración de la interfaz
 st.set_page_config(page_title="Balanceo Trituradora 405CR01", layout="centered")
@@ -167,7 +169,18 @@ with tab1:
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                         pdf.set_font("Arial", "", 10)
                         pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
-                        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {datetime.now().strftime('%H:%M')}", ln=True, align='R')
+                        # Definir zona horaria de Ecuador
+                        tz_ec = pytz.timezone('America/Guayaquil')
+                        hora_ecuador = datetime.now(tz_ec).strftime('%H:%M')
+
+                        # Línea del PDF corregida
+                        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {hora_ecuador}", ln=True, align='R')
+
+
+
+
+
+
                         
                         pdf.ln(5); pdf.set_fill_color(230,230,230)
                         pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES DE PRUEBA", ln=True, fill=True)
