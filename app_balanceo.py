@@ -130,9 +130,9 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
-                    # Vector de desbalance
-                    ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=2, headwidth=10))
-                   # 1. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA
+ # Vector de desbalance
+ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=2, headwidth=10))
+# 1. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA
 # Usamos un offset para que el texto no toque la punta de la flecha
 offset = lim_max * 0.1  
 tx = bx + (offset if bx >= 0 else -offset)
