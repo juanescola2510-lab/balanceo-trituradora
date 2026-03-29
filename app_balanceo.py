@@ -131,48 +131,54 @@ with tab1:
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
 # --- COPIA DESDE AQUÍ ---
+# --- REEMPLAZA DESDE LA LÍNEA 134 CON ESTO ---
 try:
-    # Vector de desbalance
+    # 1. DIBUJO DEL VECTOR ROJO (RESULTANTE)
     ax.annotate('', xy=(bx, by), xytext=(0, 0), 
                 arrowprops=dict(facecolor='red', edgecolor='red', width=2, headwidth=10))
 
-    # 1. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA
-    offset = lim_max * 0.2  # Aumentado un poco para mayor claridad
-    tx = bx + (offset if bx >= 0 else -offset)
-    ty = by + (offset if by >= 0 else -offset)
+    # 2. CÁLCULO DE POSICIÓN DINÁMICA PARA LA ETIQUETA (EVITA QUE SE CRUCEN)
+    # Aumentamos el margen (offset) para que el texto flote lejos de la punta
+    offset_dist = lim_max * 0.25 
+    tx = bx + (offset_dist if bx >= 0 else -offset_dist)
+    ty = by + (offset_dist if by >= 0 else -offset_dist)
 
-    # Alineación dinámica según el cuadrante
-    ha = 'left' if bx >= 0 else 'right'
-    va = 'bottom' if by >= 0 else 'top'
+    # Alineación automática del texto según el cuadrante
+    h_align = 'left' if bx >= 0 else 'right'
+    v_align = 'bottom' if by >= 0 else 'top'
 
-    # 2. ETIQUETA MEJORADA (SIN CRUCES)
+    # 3. ETIQUETA MEJORADA CON CUADRO (BBOX)
     ax.text(tx, ty, f" RESULTANTE \n Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
             color='red', fontweight='bold', fontsize=11, 
-            ha=ha, va=va,
+            ha=h_align, va=v_align,
             bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', lw=1.5, boxstyle='round,pad=0.5'))
 
-    # 3. EJES ANGULARES (CORREGIDOS A 60° PARA CUBRIR 360°)
+    # 4. EJES ANGULARES (CUBREN LOS 360°)
     for deg in range(0, 360, 60):
         rad = math.radians(deg)
+        # 0° arriba (eje Y), sentido horario
         ex, ey = lim_max * math.sin(rad), lim_max * math.cos(rad)
         ax.plot([0, ex], [0, ey], 'gray', lw=0.5, ls='--')
-        ax.text(ex*1.15, ey*1.15, f"{deg}°", ha='center', va='center', fontsize=9, color='black', fontweight='bold')
+        ax.text(ex * 1.15, ey * 1.15, f"{deg}°", ha='center', va='center', 
+                fontsize=10, color='black', fontweight='bold')
 
-    # 4. CONFIGURACIÓN FINAL
+    # 5. CONFIGURACIÓN DE LÍMITES Y EJES
     ax.set_aspect('equal')
-    # Ajustamos el límite para que el texto siempre quepa
-    r_lim = lim_max * 1.5
-    ax.set_xlim(-r_lim, r_lim)
-    ax.set_ylim(-r_lim, r_lim)
-    ax.axis('off') 
+    # Ampliamos el límite para que el cuadro de texto no se corte
+    ax.set_xlim(-lim_max * 1.6, lim_max * 1.6)
+    ax.set_ylim(-lim_max * 1.6, lim_max * 1.6)
+    ax.axis('off') # Quita el marco cuadrado de Matplotlib
     
-    # Renderizar en Streamlit
+    # 6. MOSTRAR EN STREAMLIT
     st.pyplot(fig)
 
 except Exception as e:
+    # ESTO ES LO QUE CIERRA EL TRY Y EVITA EL SYNTAX ERROR
     st.error(f"Error al generar el gráfico: {e}")
-# --- HASTA AQUÍ ---
- 
+Usa el código con precaución.
+
+¿Qué corregimos para que funcione?
+
                    
                        
 
