@@ -175,9 +175,7 @@ try:
 except Exception as e:
     # ESTO ES LO QUE CIERRA EL TRY Y EVITA EL SYNTAX ERROR
     st.error(f"Error al generar el gráfico: {e}")
-Usa el código con precaución.
 
-¿Qué corregimos para que funcione?
 
                    
                        
