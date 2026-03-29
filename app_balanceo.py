@@ -130,13 +130,13 @@ with tab1:
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
                     ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                     
-# --- REEMPLAZA DESDE LA LÍNEA DONDE EMPIEZA TU 'try:' CON ESTO ---
+# --- REEMPLAZA DESDE LA LÍNEA 134 CON ESTO ---
 try:
     # 1. DIBUJO DEL VECTOR RESULTANTE (ROJO)
     ax.annotate('', xy=(bx, by), xytext=(0, 0), 
                 arrowprops=dict(facecolor='red', edgecolor='red', width=2.5, headwidth=12))
 
-    # 2. CÁLCULO DE POSICIÓN DINÁMICA (PARA QUE NO SE CRUCEN)
+    # 2. POSICIONAMIENTO DINÁMICO (PARA QUE NO SE CRUCEN)
     # El texto se aleja de la punta del vector (bx, by)
     dist_offset = lim_max * 0.25
     tx = bx + (dist_offset if bx >= 0 else -dist_offset)
@@ -166,8 +166,8 @@ try:
 
     st.pyplot(fig)
 
-# --- ESTO ES LO QUE ELIMINA EL SYNTAX ERROR ---
 except Exception as e:
+    # ESTO ES LO QUE ELIMINA EL SYNTAX ERROR DE LA LÍNEA 134
     st.error(f"Error en la visualización: {e}")
 
                     # 4. Generación de PDF
