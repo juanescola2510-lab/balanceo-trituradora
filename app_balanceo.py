@@ -95,7 +95,7 @@ with tab1:
             meds.append({'v': v, 'p': p, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO (LÓGICA DE CONVERGENCIA REAL) ---
-   if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
+if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
         errores = []
         if not tecnico: errores.append("Nombre del Técnico")
         if v1 is None: errores.append("Vibración Inicial (V1)")
