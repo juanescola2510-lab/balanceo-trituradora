@@ -108,22 +108,19 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
             for e in errores: st.write(f"* {e}")
         else:
             try:
-                # 1. Centros de los círculos (Vibración Inicial V1)
+                # --- INICIO DE TUS CÁLCULOS (SIN MODIFICAR) ---
                 centros = []
                 for m in meds:
                     rad = math.radians(m['a'])
                     centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-                # 2. Intersecciones (Función debe devolver lista de tuplas [(x,y), ...])
                 i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
                 i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
                 i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
                 if i12 and i23 and i31:
-                    # --- LÓGICA DE CONVERGENCIA: BUSCAR EL TRIÁNGULO MÁS PEQUEÑO ---
                     mejor_tri = None
                     perimetro_minimo = float('inf')
-                    
                     for p1 in i12:
                         for p2 in i23:
                             for p3 in i31:
@@ -131,78 +128,90 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                                 d23 = math.sqrt((p2[0]-p3[0])**2 + (p2[1]-p3[1])**2)
                                 d31 = math.sqrt((p3[0]-p1[0])**2 + (p3[1]-p1[1])**2)
                                 perimetro = d12 + d23 + d31
-                                
                                 if perimetro < perimetro_minimo:
                                     perimetro_minimo = perimetro
                                     mejor_tri = (p1, p2, p3)
 
-                    # --- CÁLCULO DEL BARICENTRO (PUNTO CENTRAL DEL TRIÁNGULO ROJO) ---
                     bx = sum(p[0] for p in mejor_tri) / 3
                     by = sum(p[1] for p in mejor_tri) / 3
-                    
                     mag_res = math.sqrt(bx**2 + by**2)
                     ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
-                    
                     p_prueba_avg = sum(m['p'] for m in meds) / 3
                     peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                     
-                    # Descomposición en sectores de 72°
                     sector = 72
                     lim_bajo = math.floor(ang_res / sector) * sector
                     lim_alto = lim_bajo + sector
                     p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                     p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                    # --- 3. GRÁFICO ---
+                    # --- GRÁFICO (PARA EL PDF Y PANTALLA) ---
                     fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                     ax.set_aspect('equal')
                     for i in range(3):
-                        ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.2, ls='--'))
+                        ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
+                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.5))
+                    ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                     
-                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.4, label='Triángulo de Convergencia'))
-                    ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=2, headwidth=10))
-                    
-                    ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
-                            color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', bbox=dict(facecolor='white', alpha=0.8))
-
-                    lim_max = max([m['v'] + v1 for m in meds]) * 1.2
-                    ax.set_xlim(-lim_max, lim_max); ax.set_ylim(-lim_max, lim_max)
-                    ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
+                    lim_max = max([m['v'] + v1 for m in meds]) * 1.3
+                    ax.set_xlim(-lim_max*1.3, lim_max*1.3); ax.set_ylim(-lim_max*1.3, lim_max*1.3)
+                    ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
                     st.pyplot(fig, use_container_width=True)
 
                     instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
-                    st.success(f"✅ **RESULTADO:** {instruccion}")
+                    st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # --- 4. FUNCIÓN PDF ---
+                    # --- NUEVA FUNCIÓN PDF MEJORADA ---
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
-                        if os.path.exists("LOGOUNACEM.jpg"): pdf.image("LOGOUNACEM.jpg", x=10, y=10, w=35)
-                        pdf.set_font("Arial", "B", 16); pdf.set_text_color(20, 50, 100)
-                        pdf.cell(0, 15, "INFORME DE BALANCEO DINÁMICO", ln=True, align='R')
-                        pdf.line(10, 30, 200, 30); pdf.ln(10)
+                        if os.path.exists("LOGOUNACEM.jpg"):
+                            pdf.image("LOGOUNACEM.jpg", x=82, y=10, w=45) # Centrado aproximado
                         
+                        pdf.ln(35)
+                        pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
+                        pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
+                        pdf.set_draw_color(20, 50, 100); pdf.line(20, 55, 190, 55); pdf.ln(12)
+
+                        # Info General Ecuador
                         pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                         tz_ec = pytz.timezone('America/Guayaquil')
-                        pdf.cell(100, 8, f"TÉCNICO: {tecnico.upper()}"); pdf.cell(90, 8, f"FECHA: {fecha_hoy} | {datetime.now(tz_ec).strftime('%H:%M')}", ln=True, align='R')
-                        
-                        pdf.ln(5); pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255)
-                        pdf.cell(0, 10, "  ACCIÓN RECOMENDADA", ln=True, fill=True)
-                        pdf.set_text_color(0); pdf.set_font("Arial", "", 10)
-                        pdf.multi_cell(0, 10, f"{instruccion}", border=1)
-                        
+                        ahora = datetime.now(tz_ec)
+                        pdf.cell(95, 8, f"TÉCNICO: {tecnico.upper()}", ln=0)
+                        pdf.cell(95, 8, f"FECHA: {ahora.strftime('%d/%m/%Y')} | HORA: {ahora.strftime('%H:%M:%S')}", ln=1, align='R')
+                        pdf.ln(5)
+
+                        # Tabla 1: Mediciones
+                        pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
+                        pdf.cell(0, 10, "  VALORES MEDIDOS", ln=True, fill=True)
+                        pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
+                        pdf.cell(60, 8, "Punto", border=1, align='C'); pdf.cell(65, 8, "Vibración (mm/s)", border=1, align='C'); pdf.cell(65, 8, "Peso Prueba (g)", border=1, align='C', ln=1)
+                        pdf.set_font("Arial", "", 10)
+                        pdf.cell(60, 8, "V1 (Inicial)", border=1, align='C'); pdf.cell(65, 8, f"{v1}", border=1, align='C'); pdf.cell(65, 8, "-", border=1, align='C', ln=1)
+                        for i, m in enumerate(meds, 2):
+                            pdf.cell(60, 8, f"V{i}", border=1, align='C'); pdf.cell(65, 8, f"{m['v']}", border=1, align='C'); pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=1)
+
+                        pdf.ln(8)
+                        # Tabla 2: Resultados
+                        pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
+                        pdf.cell(0, 10, "  RESULTADOS DE COMPENSACIÓN", ln=True, fill=True)
+                        pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
+                        pdf.cell(47, 8, "Peso Total (g)", border=1, align='C'); pdf.cell(47, 8, "Ángulo Corr.", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_bajo} (g)", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_alto} (g)", border=1, align='C', ln=1)
+                        pdf.cell(47, 10, f"{round(peso_total, 2)}", border=1, align='C'); pdf.cell(47, 10, f"{round(ang_res, 1)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_bajo, 2)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_alto, 2)}", border=1, align='C', ln=1)
+
+                        # Gráfico
+                        pdf.ln(5)
                         buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
                         with open("temp_plt.png", "wb") as f: f.write(buf.read())
-                        pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
+                        pdf.image("temp_plt.png", x=55, y=pdf.get_y()+5, w=100)
                         return pdf.output(dest='S').encode('latin-1')
 
                     st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
 
                 else:
-                    st.error("❌ Los círculos no convergen en una zona común. Revise las lecturas.")
+                    st.error("❌ Los círculos no se cortan.")
             except Exception as ex:
-                st.error(f"⚠️ Error en el cálculo: {ex}")
-                
+                st.error(f"Error: {ex}")
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
