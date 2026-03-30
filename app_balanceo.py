@@ -145,7 +145,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                     p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                     p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                    # --- GRÁFICO (PARA EL PDF Y PANTALLA) ---
+                    # --- GRÁFICO (CON ETIQUETA ROJA PARA PANTALLA Y PDF) ---
                     fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                     ax.set_aspect('equal')
                     for i in range(3):
@@ -153,27 +153,33 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                     ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.5))
                     ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                     
+                    # AGREGANDO ETIQUETA ROJA EN LA FIGURA PRINCIPAL
+                    ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
+                            color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
+                            bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
+
                     lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                     ax.set_xlim(-lim_max*1.3, lim_max*1.3); ax.set_ylim(-lim_max*1.3, lim_max*1.3)
                     ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
+                    
+                    # DIBUJAR EN PANTALLA
                     st.pyplot(fig, use_container_width=True)
 
                     instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                     st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # --- NUEVA FUNCIÓN PDF MEJORADA ---
+                    # --- FUNCIÓN PDF (SIN MODIFICACIONES) ---
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
                         if os.path.exists("LOGOUNACEM.jpg"):
-                            pdf.image("LOGOUNACEM.jpg", x=82, y=10, w=45) # Centrado aproximado
+                            pdf.image("LOGOUNACEM.jpg", x=82, y=10, w=45)
                         
-                        pdf.ln(50)
+                        pdf.ln(55)
                         pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
-                        pdf.set_draw_color(20, 50, 100); pdf.line(20, 55, 190, 55); pdf.ln(12)
+                        pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2); pdf.ln(15)
 
-                        # Info General Ecuador
                         pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                         tz_ec = pytz.timezone('America/Guayaquil')
                         ahora = datetime.now(tz_ec)
@@ -181,7 +187,6 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         pdf.cell(95, 8, f"FECHA: {ahora.strftime('%d/%m/%Y')} | HORA: {ahora.strftime('%H:%M:%S')}", ln=1, align='R')
                         pdf.ln(5)
 
-                        # Tabla 1: Mediciones
                         pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
                         pdf.cell(0, 10, "  VALORES MEDIDOS", ln=True, fill=True)
                         pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
@@ -192,18 +197,15 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                             pdf.cell(60, 8, f"V{i}", border=1, align='C'); pdf.cell(65, 8, f"{m['v']}", border=1, align='C'); pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=1)
 
                         pdf.ln(8)
-                        # Tabla 2: Resultados
                         pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
                         pdf.cell(0, 10, "  RESULTADOS DE COMPENSACIÓN", ln=True, fill=True)
                         pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
                         pdf.cell(47, 8, "Peso Total (g)", border=1, align='C'); pdf.cell(47, 8, "Ángulo Corr.", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_bajo} (g)", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_alto} (g)", border=1, align='C', ln=1)
                         pdf.cell(47, 10, f"{round(peso_total, 2)}", border=1, align='C'); pdf.cell(47, 10, f"{round(ang_res, 1)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_bajo, 2)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_alto, 2)}", border=1, align='C', ln=1)
 
-                        # Gráfico
-                        pdf.ln(5)
                         buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
                         with open("temp_plt.png", "wb") as f: f.write(buf.read())
-                        pdf.image("temp_plt.png", x=55, y=pdf.get_y()+5, w=100)
+                        pdf.image("temp_plt.png", x=55, y=pdf.get_y()+10, w=100)
                         return pdf.output(dest='S').encode('latin-1')
 
                     st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
