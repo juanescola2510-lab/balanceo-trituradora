@@ -94,7 +94,7 @@ with tab1:
             a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
             meds.append({'v': v, 'p': p, 'a': a})
 
-# --- BOTÓN DE PROCESAMIENTO (COPIAR DESDE AQUÍ) ---
+# --- BOTÓN DE PROCESAMIENTO (LÓGICA DE CONVERGENCIA REAL) ---
     if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
         errores = []
         if not tecnico: errores.append("Nombre del Técnico")
@@ -114,29 +114,34 @@ with tab1:
                     rad = math.radians(m['a'])
                     centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-                # 2. Obtención de Intersecciones
+                # 2. Intersecciones
                 i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
                 i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
                 i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
                 if i12 and i23 and i31:
-                    # --- LÓGICA PARA SELECCIONAR EL TRIÁNGULO ROJO (INTERNO) ---
+                    # --- LÓGICA DE MÍNIMA DISTANCIA ENTRE PUNTOS (TRIÁNGULO REAL) ---
                     mejor_tri = None
-                    dist_minima = float('inf')
+                    perimetro_minimo = float('inf')
                     
                     for p1 in i12:
                         for p2 in i23:
                             for p3 in i31:
-                                # Calculamos baricentro temporal
-                                t_bx, t_by = (p1[0]+p2[0]+p3[0])/3, (p1[1]+p2[1]+p3[1])/3
-                                # Buscamos la combinación más cercana al origen (Triángulo Interno)
-                                dist = math.sqrt(t_bx**2 + t_by**2)
-                                if dist < dist_minima:
-                                    dist_minima = dist
+                                # Calculamos la distancia entre cada par de puntos
+                                d12 = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+                                d23 = math.sqrt((p2[0]-p3[0])**2 + (p2[1]-p3[1])**2)
+                                d31 = math.sqrt((p3[0]-p1[0])**2 + (p3[1]-p1[1])**2)
+                                
+                                perimetro = d12 + d23 + d31
+                                
+                                if perimetro < perimetro_minimo:
+                                    perimetro_minimo = perimetro
                                     mejor_tri = (p1, p2, p3)
 
-                    # Cálculo de resultados finales
-                    bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
+                    # Cálculo del Baricentro (Punto de equilibrio)
+                    bx = sum(p[0] for p in mejor_tri) / 3
+                    by = sum(p[1] for p in mejor_tri) / 3
+                    
                     mag_res = math.sqrt(bx**2 + by**2)
                     ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
                     
@@ -147,85 +152,68 @@ with tab1:
                     sector = 72
                     lim_bajo = math.floor(ang_res / sector) * sector
                     lim_alto = lim_bajo + sector
-                    rad_total = math.radians(sector)
-                    p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
-                    p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
+                    p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
+                    p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                    # --- 3. GRÁFICO DE ALTA RESOLUCIÓN ---
+                    # --- 3. GRÁFICO ---
                     fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                     ax.set_aspect('equal')
                     for i in range(3):
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
                     
-                    # Dibujamos el triángulo en ROJO como pediste
-                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.4, label="Solución Seleccionada"))
+                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.5))
                     ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                     
-                    # Etiqueta Roja en esquina
+                    # Etiqueta Roja
                     ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
-                            color='red', fontweight='bold', fontsize=10, transform=ax.transAxes,
-                            ha='right', va='top', bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', pad=5))
+                            color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
 
-                    # Ángulos fuera del recuadro
+                    # Ejes y ángulos fuera
                     lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                     for e in range(5):
-                        ang_deg = e * 72
-                        rad_e = math.radians(ang_deg)
-                        ex, ey = -lim_max * math.sin(rad_e), lim_max * math.cos(rad_e)
+                        a_d = e * 72
+                        r_e = math.radians(a_d)
+                        ex, ey = -lim_max * math.sin(r_e), lim_max * math.cos(r_e)
                         ax.plot([0, ex], [0, ey], color='gray', lw=0.6, ls=':', alpha=0.5)
-                        tx, ty = -lim_max * 1.15 * math.sin(rad_e), lim_max * 1.15 * math.cos(rad_e)
-                        ax.text(tx, ty, f"{ang_deg}°", ha='center', va='center', fontweight='bold', color='#444')
+                        ax.text(-lim_max*1.12*math.sin(r_e), lim_max*1.12*math.cos(r_e), f"{a_d}°", ha='center', fontweight='bold', color='#444')
 
-                    margin = lim_max * 1.35
-                    ax.set_xlim(-margin, margin); ax.set_ylim(-margin, margin)
+                    ax.set_xlim(-lim_max*1.3, lim_max*1.3); ax.set_ylim(-lim_max*1.3, lim_max*1.3)
                     ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
-                    plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=14, pad=30)
                     st.pyplot(fig, use_container_width=True)
 
                     instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                     st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # --- 4. GENERACIÓN DE PDF ---
+                    # --- 4. PDF ---
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
-                        if os.path.exists("LOGOUNACEM.jpg"):
-                            pdf.image("LOGOUNACEM.jpg", x=85, y=10, w=40)
-                        pdf.ln(40); pdf.set_font("Arial", "B", 16)
-                        pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
+                        if os.path.exists("LOGOUNACEM.jpg"): pdf.image("LOGOUNACEM.jpg", x=85, y=10, w=40)
+                        pdf.ln(40); pdf.set_font("Arial", "B", 16); pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                         pdf.set_font("Arial", "", 10)
-                        pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
-                        
                         tz_ec = pytz.timezone('America/Guayaquil')
                         hora_ec = datetime.now(tz_ec).strftime('%H:%M')
-                        pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {hora_ec}", ln=True, align='R')
+                        pdf.cell(100, 8, f"Técnico: {tecnico}"); pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {hora_ec}", ln=True, align='R')
                         
-                        pdf.ln(5); pdf.set_fill_color(230,230,230)
-                        pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES DE PRUEBA", ln=True, fill=True)
+                        pdf.ln(5); pdf.set_fill_color(230,230,230); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES", ln=True, fill=True)
                         pdf.set_font("Arial", "", 10)
-                        pdf.cell(63, 7, "Punto", 1); pdf.cell(63, 7, "Vibración (mm/s)", 1); pdf.cell(64, 7, "Peso (g)", 1, ln=True)
                         for i, m in enumerate(meds, 2):
-                            pdf.cell(63, 7, f"V{i}", 1); pdf.cell(63, 7, str(m['v']), 1); pdf.cell(64, 7, str(m['p']), 1, ln=True)
+                            pdf.cell(0, 7, f"V{i}: {m['v']} mm/s | Peso: {m['p']} g", ln=True, border=1)
 
                         pdf.ln(5); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " RESULTADOS FINAL", ln=True, fill=True)
-                        pdf.set_font("Arial", "", 10)
-                        pdf.cell(100, 7, "Vibración Inicial (V1):", 1); pdf.cell(90, 7, f"{v1} mm/s", 1, ln=True)
-                        pdf.cell(100, 7, "Peso Total Corrección:", 1); pdf.cell(90, 7, f"{round(peso_total, 2)} g", 1, ln=True)
-                        pdf.multi_cell(0, 8, f"INSTRUCCIÓN DE MONTAJE: {instruccion}", border=1)
-
-                        img_buf = io.BytesIO()
-                        fig.savefig(img_buf, format='png', dpi=200); img_buf.seek(0)
-                        with open("temp_plt.png", "wb") as f: f.write(img_buf.read())
+                        pdf.set_font("Arial", "", 10); pdf.multi_cell(0, 8, f"INSTRUCCIÓN: {instruccion}", border=1)
+                        
+                        buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=200); buf.seek(0)
+                        with open("temp_plt.png", "wb") as f: f.write(buf.read())
                         pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
                         return pdf.output(dest='S').encode('latin-1')
 
                     st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
 
                 else:
-                    st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
+                    st.error("❌ Los círculos no se cortan. Verifique lecturas.")
             except Exception as ex:
                 st.error(f"Error en el proceso: {ex}")
-    # --- FIN DEL BLOQUE ---
 
                 
 
