@@ -186,34 +186,82 @@ with tab1:
 
                     # --- 4. PDF ---
                     def export_pdf():
-                        pdf = FPDF()
-                        pdf.add_page()
-                        if os.path.exists("LOGOUNACEM.jpg"): pdf.image("LOGOUNACEM.jpg", x=85, y=10, w=40)
-                        pdf.ln(40); pdf.set_font("Arial", "B", 16); pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
-                        pdf.set_font("Arial", "", 10)
-                        tz_ec = pytz.timezone('America/Guayaquil')
-                        hora_ec = datetime.now(tz_ec).strftime('%H:%M')
-                        pdf.cell(100, 8, f"Técnico: {tecnico}"); pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {hora_ec}", ln=True, align='R')
-                        
-                        pdf.ln(5); pdf.set_fill_color(230,230,230); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " MEDICIONES", ln=True, fill=True)
-                        pdf.set_font("Arial", "", 10)
-                        for i, m in enumerate(meds, 2):
-                            pdf.cell(0, 7, f"V{i}: {m['v']} mm/s | Peso: {m['p']} g", ln=True, border=1)
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # --- ENCABEZADO ---
+    if os.path.exists("LOGOUNACEM.jpg"):
+        pdf.image("LOGOUNACEM.jpg", x=10, y=10, w=35)
+    
+    pdf.set_font("Arial", "B", 18)
+    pdf.set_text_color(20, 50, 100) # Azul oscuro corporativo
+    pdf.cell(0, 15, "INFORME DE BALANCEO DINÁMICO", ln=True, align='R')
+    pdf.set_draw_color(20, 50, 100)
+    pdf.line(10, 32, 200, 32) # Línea divisoria
+    pdf.ln(12)
 
-                        pdf.ln(5); pdf.set_font("Arial", "B", 10); pdf.cell(0, 8, " RESULTADOS FINAL", ln=True, fill=True)
-                        pdf.set_font("Arial", "", 10); pdf.multi_cell(0, 8, f"INSTRUCCIÓN: {instruccion}", border=1)
-                        
-                        buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=200); buf.seek(0)
-                        with open("temp_plt.png", "wb") as f: f.write(buf.read())
-                        pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
-                        return pdf.output(dest='S').encode('latin-1')
+    # --- INFORMACIÓN GENERAL (Dos columnas) ---
+    pdf.set_font("Arial", "B", 10)
+    pdf.set_text_color(0)
+    pdf.cell(100, 8, f"TÉCNICO: {tecnico.upper()}", ln=0)
+    tz_ec = pytz.timezone('America/Guayaquil')
+    pdf.cell(90, 8, f"FECHA: {fecha_hoy}  |  HORA: {datetime.now(tz_ec).strftime('%H:%M')}", ln=True, align='R')
+    pdf.ln(5)
 
-                    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
+    # --- TABLA DE MEDICIONES ---
+    pdf.set_fill_color(20, 50, 100)
+    pdf.set_text_color(255)
+    pdf.set_font("Arial", "B", 11)
+    pdf.cell(0, 10, "  RESUMEN DE MEDICIONES", ln=True, fill=True)
+    
+    pdf.set_text_color(0)
+    pdf.set_font("Arial", "B", 10)
+    # Encabezados de tabla
+    pdf.cell(60, 8, "Punto de Medición", border=1, align='C')
+    pdf.cell(65, 8, "Vibración (mm/s)", border=1, align='C')
+    pdf.cell(65, 8, "Peso de Prueba (g)", border=1, align='C', ln=True)
+    
+    pdf.set_font("Arial", "", 10)
+    # Datos de V1 (Inicial)
+    pdf.cell(60, 8, "Vibración Inicial (V1)", border=1, align='C')
+    pdf.cell(65, 8, f"{v1}", border=1, align='C')
+    pdf.cell(65, 8, "-", border=1, align='C', ln=True)
+    
+    # Datos de V2, V3, V4
+    for i, m in enumerate(meds, 2):
+        pdf.cell(60, 8, f"Medición V{i}", border=1, align='C')
+        pdf.cell(65, 8, f"{m['v']}", border=1, align='C')
+        pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=True)
 
-                else:
-                    st.error("❌ Los círculos no se cortan. Verifique lecturas.")
-            except Exception as ex:
-                st.error(f"Error en el proceso: {ex}")
+    # --- RESULTADOS Y ACCIÓN ---
+    pdf.ln(8)
+    pdf.set_fill_color(230, 240, 255) # Azul muy claro
+    pdf.set_font("Arial", "B", 11)
+    pdf.cell(0, 10, "  ACCIÓN RECOMENDADA", ln=True, fill=True)
+    
+    pdf.set_font("Arial", "B", 10)
+    pdf.set_text_color(200, 0, 0) # Rojo para la instrucción
+    pdf.multi_cell(0, 10, f"{instruccion}", border=1, align='C')
+
+    # --- GRÁFICO VECTORIAL ---
+    pdf.ln(5)
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+    buf.seek(0)
+    with open("temp_plt.png", "wb") as f:
+        f.write(buf.read())
+    
+    # Centrar la imagen
+    pdf.image("temp_plt.png", x=45, y=pdf.get_y() + 5, w=120)
+    
+    # Pie de página (Opcional)
+    pdf.set_y(-25)
+    pdf.set_font("Arial", "I", 8)
+    pdf.set_text_color(128)
+    pdf.cell(0, 10, "Este reporte fue generado automáticamente por el Sistema de Balanceo de Precisión.", align='C')
+
+    return pdf.output(dest='S').encode('latin-1')
 
                 
 
