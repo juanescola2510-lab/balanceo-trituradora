@@ -94,10 +94,9 @@ with tab1:
             a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
             meds.append({'v': v, 'p': p, 'a': a})
 
- # --- BOTÓN DE PROCESAMIENTO ---
+# --- BOTÓN DE PROCESAMIENTO ---
 if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
     errores = []
-    # Validación de datos (con soporte para el valor None que configuramos)
     if not tecnico: errores.append("Nombre del Técnico")
     if v1 is None: errores.append("Vibración Inicial (V1)")
     for i, m in enumerate(meds, 2):
@@ -109,20 +108,18 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
         for e in errores: st.write(f"* {e}")
     else:
         try:
-            # 1. Centros de los círculos (Vectores V1 desplazados)
+            # 1. Cálculo de Centros (Vectores V1 desplazados)
             centros = []
             for m in meds:
                 rad = math.radians(m['a'])
-                # Coordenadas rectangulares: x = -sen, y = cos para sistema de balanceo
                 centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-            # 2. Intersecciones entre pares de círculos
+            # 2. Obtención de Intersecciones
             i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
             i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
             i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
-                # Buscar el triángulo de error mínimo
                 min_area = float('inf')
                 mejor_tri = None
                 for p1 in i12:
@@ -133,16 +130,15 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                                 min_area = area
                                 mejor_tri = (p1, p2, p3)
 
-                # Centroide del triángulo (Punto de balanceo)
+                # Cálculo de resultados finales
                 bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
                 mag_res = math.sqrt(bx**2 + by**2)
                 ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
                 
-                # Cálculo de pesos finales
                 p_prueba_avg = sum(m['p'] for m in meds) / 3
                 peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                 
-                # Descomposición en sectores (72° para 5 álabes/puntos)
+                # Descomposición en sectores de 72° (5 puntos)
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
                 lim_alto = lim_bajo + sector
@@ -150,60 +146,50 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
 
-                # --- 3. GRÁFICO DE ALTA RESOLUCIÓN (Sin pixelado) ---
-                fig, ax = plt.subplots(figsize=(8,8), dpi=200) # DPI alto para nitidez
+                # --- 3. GRÁFICO DE ALTA RESOLUCIÓN ---
+                fig, ax = plt.subplots(figsize=(8,8), dpi=200) # Nitidez máxima
                 ax.set_aspect('equal')
                 
-                # Dibujar círculos de prueba
+                # Círculos y triángulo
                 for i in range(3):
-                    c = plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1)
-                    ax.add_patch(c)
+                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
+                ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
                 
-                # Triángulo de solución
-                ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.5, label="Área de Incertidumbre"))
+                # Vector de desbalance
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                 
-                # Vector de desbalance (Flecha roja nítida)
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-                            arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
-                
-                ax.grid(True, linestyle=':', alpha=0.6)
-                ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
-                plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=12)
+                # Etiqueta de valores
+                ax.text(bx, by, f" Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
+                        color='red', fontweight='bold', fontsize=10, 
+                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', pad=2))
 
-                # Mostrar gráfico en Streamlit con ancho completo
+                # Dibujar Ejes de Sectores (72°)
+                lim_max = max([m['v'] + v1 for m in meds]) * 1.2
+                for e in range(6):
+                    ang_e = math.radians(e * 72)
+                    ex, ey = -lim_max * math.sin(ang_e), lim_max * math.cos(ang_e)
+                    ax.plot([0, ex], [0, ey], color='gray', lw=0.8, ls=':')
+                    ax.text(ex*1.08, ey*1.08, f"{e*72}°", ha='center', va='center', fontweight='bold', color='#444')
+
+                ax.set_xlim(-lim_max, lim_max); ax.set_ylim(-lim_max, lim_max)
+                ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
+                plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=12, pad=20)
+                
                 st.pyplot(fig, use_container_width=True)
 
-                # --- RESULTADOS EN PANTALLA ---
-                col1, col2 = st.columns(2)
-                col1.metric("Peso Total de Corrección", f"{round(peso_total, 2)} g")
-                col2.metric("Ángulo de Aplicación", f"{round(ang_res, 1)}°")
-
-                # Aquí llamarías a la función de export_pdf() que definimos antes
-                # ...
+                # Instrucción y PDF
+                instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
+                st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
+                
+                # (Aquí llamarías a tu función de export_pdf pasándole la variable 'instruccion')
                 
             else:
-                st.error("❌ Los círculos no se cortan. Revisa que las unidades de vibración sean correctas.")
+                st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
         except Exception as ex:
-            st.error(f"Error crítico en el cálculo: {ex}")   
-                    
-                    # ETIQUETA DE VALORES EN EL GRÁFICO
-                    ax.text(bx, by, f" Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-                            color='red', fontweight='bold', fontsize=12, 
-                            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', pad=2))
-                    
-                    lim_max = max([m['v'] + v1 for m in meds]) * 1.2
-                    for e in range(6):
-                        ang_e = math.radians(e * 72)
-                        ex, ey = -lim_max * math.sin(ang_e), lim_max * math.cos(ang_e)
-                        ax.plot([0, ex], [0, ey], 'gray', lw=0.6, ls=':')
-                        ax.text(ex*1.05, ey*1.05, f"{e*72}°", ha='center', fontweight='bold')
-                    
-                    ax.set_aspect('equal'); ax.set_xlim(-lim_max, lim_max); ax.set_ylim(-lim_max, lim_max)
-                    ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
-                    st.pyplot(fig)
+            st.error(f"Error en el proceso: {ex}")
+ 
 
-                    instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
-                    st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
+   
 
                     # 4. Generación de PDF
                     def export_pdf():
