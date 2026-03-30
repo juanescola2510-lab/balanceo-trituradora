@@ -156,7 +156,7 @@ with tab1:
                     ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
                     st.pyplot(fig)
 
-                    instruccion = f"MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
+                    instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                     st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
                     # 4. Generación de PDF
