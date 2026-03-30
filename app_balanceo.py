@@ -221,7 +221,7 @@ with tab1:
             except Exception as ex:
                 st.error(f"Error en el proceso: {ex}")
     # --- (HASTA AQUÍ) ---
-Usa el código con precaución.
+
                 
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
