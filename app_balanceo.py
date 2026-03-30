@@ -108,7 +108,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
         for e in errores: st.write(f"* {e}")
     else:
         try:
-            # --- INICIO DE TUS CÁLCULOS (SIN MODIFICAR) ---
+            # --- CÁLCULOS (SIN MODIFICAR LÓGICA) ---
             centros = []
             for m in meds:
                 rad = math.radians(m['a'])
@@ -145,25 +145,25 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                # --- GRÁFICO (0° EN EJE Y POSITIVO) ---
+                # --- GRÁFICO (0° EN EJE Y+, SENTIDO ANTIHORARIO) ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
-                # Dibujar líneas guía cada 72° empezando desde el Norte (Eje Y+)
+                # Líneas cada 72° (0° arriba, avanza antihorario)
                 for ang_guia in range(0, 360, 72):
-                    # Ajuste para que 0 sea arriba: restamos de 90 y convertimos a rad
-                    rad_plot = math.radians(90 - ang_guia) 
+                    # Para antihorario con 0 en Y+: rad = 90 + ang_guia
+                    rad_plot = math.radians(90 + ang_guia) 
                     
-                    # Línea punteada
+                    # Línea punteada opaca
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
                             color='gray', linestyle='--', linewidth=0.8, alpha=0.3)
                     
-                    # Etiquetas de ángulos (fuera de los ejes para que no se crucen)
+                    # Etiquetas (fuera de los ejes)
                     tx = lim_max * 1.2 * math.cos(rad_plot)
                     ty = lim_max * 1.2 * math.sin(rad_plot)
-                    ax.text(tx, ty, f"{ang_guia}°", color='gray', fontsize=8, ha='center', va='center')
+                    ax.text(tx, ty, f"{ang_guia}°", color='gray', fontsize=9, ha='center', va='center')
 
                 for i in range(3):
                     ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
@@ -174,7 +174,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
                         bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
 
-                ax.set_xlim(-lim_max*1.35, lim_max*1.35); ax.set_ylim(-lim_max*1.35, lim_max*1.35)
+                ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
                 ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
                 
                 st.pyplot(fig, use_container_width=True)
@@ -182,7 +182,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                # --- FUNCIÓN PDF (MANTIENE TÉCNICO ARRIBA) ---
+                # --- FUNCIÓN PDF ---
                 def export_pdf():
                     pdf = FPDF()
                     pdf.add_page()
@@ -193,7 +193,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                     pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
                     pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                     pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2)
-                    pdf.ln(5) # Subida del técnico
+                    pdf.ln(5) # Técnico más arriba
 
                     pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                     tz_ec = pytz.timezone('America/Guayaquil')
@@ -229,7 +229,6 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 st.error("❌ Los círculos no se cortan.")
         except Exception as ex:
             st.error(f"Error: {ex}")
-
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
