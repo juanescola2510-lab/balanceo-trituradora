@@ -277,3 +277,4 @@ with tab2:
     *   El sistema calculará el **Peso Total** necesario y su ubicación exacta.
     *   Dado que la trituradora usa **eyectores a 72°**, el software distribuirá el peso entre los dos eyectores más cercanos.
     *   Suelde o fije los pesos según la **Acción Recomendada**.
+    """)
