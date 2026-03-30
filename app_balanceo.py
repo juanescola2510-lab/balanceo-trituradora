@@ -178,7 +178,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         pdf.ln(32)
                         pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
-                        pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2); pdf.ln(15)
+                        pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2); pdf.ln(5)
 
                         pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                         tz_ec = pytz.timezone('America/Guayaquil')
