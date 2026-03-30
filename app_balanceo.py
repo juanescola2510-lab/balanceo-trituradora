@@ -146,8 +146,8 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
 
-                # --- 3. GRÁFICO DE ALTA RESOLUCIÓN ---
-                fig, ax = plt.subplots(figsize=(8,8), dpi=200) # Nitidez máxima
+                # --- 3. GRÁFICO DE ALTA RESOLUCIÓN LIMPIO ---
+                fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 
                 # Círculos y triángulo
@@ -158,10 +158,37 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 # Vector de desbalance
                 ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                 
-                # Etiqueta de valores
-                ax.text(bx, by, f" Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
-                        color='red', fontweight='bold', fontsize=10, 
-                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', pad=2))
+                # --- SOLUCIÓN: ETIQUETA ROJA FUERA DEL VECTOR ---
+                # Colocamos el texto en una esquina fija para que no tape los círculos
+                ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
+                        color='red', fontweight='bold', fontsize=11, transform=ax.transAxes,
+                        ha='right', va='top', bbox=dict(facecolor='white', alpha=0.9, edgecolor='#FF0000', pad=5))
+
+                # --- SOLUCIÓN: ÁNGULOS FUERA DEL RECUADRO ---
+                lim_max = max([m['v'] + v1 for m in meds]) * 1.3 # Aumentamos el margen
+                for e in range(5): # 0, 72, 144, 216, 288
+                    ang_deg = e * 72
+                    rad_e = math.radians(ang_deg)
+                    # Líneas de sectores más tenues
+                    ex, ey = -lim_max * math.sin(rad_e), lim_max * math.cos(rad_e)
+                    ax.plot([0, ex], [0, ey], color='gray', lw=0.6, ls=':', alpha=0.5)
+                    
+                    # Texto de ángulos desplazado hacia afuera (1.10 del radio máximo)
+                    tx, ty = -lim_max * 1.10 * math.sin(rad_e), lim_max * 1.10 * math.cos(rad_e)
+                    ax.text(tx, ty, f"{ang_deg}°", ha='center', va='center', fontweight='bold', color='#444', fontsize=10)
+
+                # Ajuste de límites para que el texto externo no se corte
+                margin = lim_max * 1.25
+                ax.set_xlim(-margin, margin)
+                ax.set_ylim(-margin, margin)
+                
+                ax.axhline(0, color='black', lw=1.2)
+                ax.axvline(0, color='black', lw=1.2)
+                ax.grid(False) # Quitamos la rejilla de fondo para más limpieza
+                plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=14, pad=30)
+                
+                st.pyplot(fig, use_container_width=True)
+
 
                 # Dibujar Ejes de Sectores (72°)
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.2
