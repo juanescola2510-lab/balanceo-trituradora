@@ -114,34 +114,36 @@ with tab1:
                     rad = math.radians(m['a'])
                     centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-                # 2. Intersecciones
+                # 2. Obtención de Intersecciones
                 i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
                 i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
                 i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
                 if i12 and i23 and i31:
-                    # BUSCAR LOS 3 PUNTOS MÁS CERCANOS (ÁREA MÍNIMA)
-                    min_area = float('inf')
+                    # --- LÓGICA PARA SELECCIONAR EL TRIÁNGULO ROJO (INTERNO) ---
                     mejor_tri = None
+                    dist_minima = float('inf')
+                    
                     for p1 in i12:
                         for p2 in i23:
                             for p3 in i31:
-                                # Fórmula de área para asegurar cercanía
-                                area = 0.5 * abs(p1[0]*(p2[1]-p3[1]) + p2[0]*(p3[1]-p1[1]) + p3[0]*(p1[1]-p2[1]))
-                                if area < min_area:
-                                    min_area = area
+                                # Calculamos baricentro temporal
+                                t_bx, t_by = (p1[0]+p2[0]+p3[0])/3, (p1[1]+p2[1]+p3[1])/3
+                                # Buscamos la combinación más cercana al origen (Triángulo Interno)
+                                dist = math.sqrt(t_bx**2 + t_by**2)
+                                if dist < dist_minima:
+                                    dist_minima = dist
                                     mejor_tri = (p1, p2, p3)
 
-                    # Baricentro (Punto medio del triángulo mínimo)
-                    bx = sum(p[0] for p in mejor_tri)/3
-                    by = sum(p[1] for p in mejor_tri)/3
+                    # Cálculo de resultados finales
+                    bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
                     mag_res = math.sqrt(bx**2 + by**2)
                     ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
                     
                     p_prueba_avg = sum(m['p'] for m in meds) / 3
                     peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                     
-                    # Cálculo de sectores (72°)
+                    # Sectores 72°
                     sector = 72
                     lim_bajo = math.floor(ang_res / sector) * sector
                     lim_alto = lim_bajo + sector
@@ -149,15 +151,17 @@ with tab1:
                     p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
                     p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
 
-                    # --- 3. GRÁFICO DE ALTA RESOLUCIÓN LIMPIO ---
+                    # --- 3. GRÁFICO DE ALTA RESOLUCIÓN ---
                     fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                     ax.set_aspect('equal')
                     for i in range(3):
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
-                    ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
+                    
+                    # Dibujamos el triángulo en ROJO como pediste
+                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.4, label="Solución Seleccionada"))
                     ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                     
-                    # Etiqueta Roja en la esquina (No tapa nada)
+                    # Etiqueta Roja en esquina
                     ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
                             color='red', fontweight='bold', fontsize=10, transform=ax.transAxes,
                             ha='right', va='top', bbox=dict(facecolor='white', alpha=0.9, edgecolor='red', pad=5))
@@ -169,10 +173,10 @@ with tab1:
                         rad_e = math.radians(ang_deg)
                         ex, ey = -lim_max * math.sin(rad_e), lim_max * math.cos(rad_e)
                         ax.plot([0, ex], [0, ey], color='gray', lw=0.6, ls=':', alpha=0.5)
-                        tx, ty = -lim_max * 1.12 * math.sin(rad_e), lim_max * 1.12 * math.cos(rad_e)
+                        tx, ty = -lim_max * 1.15 * math.sin(rad_e), lim_max * 1.15 * math.cos(rad_e)
                         ax.text(tx, ty, f"{ang_deg}°", ha='center', va='center', fontweight='bold', color='#444')
 
-                    margin = lim_max * 1.3
+                    margin = lim_max * 1.35
                     ax.set_xlim(-margin, margin); ax.set_ylim(-margin, margin)
                     ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
                     plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=14, pad=30)
@@ -181,7 +185,7 @@ with tab1:
                     instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                     st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # --- GENERACIÓN DE PDF ---
+                    # --- 4. GENERACIÓN DE PDF ---
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
@@ -191,6 +195,7 @@ with tab1:
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                         pdf.set_font("Arial", "", 10)
                         pdf.cell(100, 8, f"Técnico: {tecnico}", ln=0)
+                        
                         tz_ec = pytz.timezone('America/Guayaquil')
                         hora_ec = datetime.now(tz_ec).strftime('%H:%M')
                         pdf.cell(90, 8, f"Fecha: {fecha_hoy} | Hora: {hora_ec}", ln=True, align='R')
@@ -220,7 +225,7 @@ with tab1:
                     st.error("❌ Los círculos no se cortan. Verifique sus lecturas.")
             except Exception as ex:
                 st.error(f"Error en el proceso: {ex}")
-    # --- (HASTA AQUÍ) ---
+    # --- FIN DEL BLOQUE ---
 
                 
 
