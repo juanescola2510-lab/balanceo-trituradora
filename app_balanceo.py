@@ -173,7 +173,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         pdf = FPDF()
                         pdf.add_page()
                         if os.path.exists("LOGOUNACEM.jpg"):
-                            pdf.image("LOGOUNACEM.jpg", x=82, y=10, w=45)
+                            pdf.image("LOGOUNACEM.jpg", x=60, y=10, w=45)
                         
                         pdf.ln(50)
                         pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
