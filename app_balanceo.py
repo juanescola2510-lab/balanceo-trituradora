@@ -190,19 +190,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 st.pyplot(fig, use_container_width=True)
 
 
-                # Dibujar Ejes de Sectores (72°)
-                lim_max = max([m['v'] + v1 for m in meds]) * 1.2
-                for e in range(6):
-                    ang_e = math.radians(e * 72)
-                    ex, ey = -lim_max * math.sin(ang_e), lim_max * math.cos(ang_e)
-                    ax.plot([0, ex], [0, ey], color='gray', lw=0.8, ls=':')
-                    ax.text(ex*1.08, ey*1.08, f"{e*72}°", ha='center', va='center', fontweight='bold', color='#444')
-
-                ax.set_xlim(-lim_max, lim_max); ax.set_ylim(-lim_max, lim_max)
-                ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
-                plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=12, pad=20)
-                
-                st.pyplot(fig, use_container_width=True)
+               
 
                 # Instrucción y PDF
                 instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
