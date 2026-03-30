@@ -145,21 +145,24 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                # --- GRÁFICO (CON LÍNEAS CADA 72° Y ETIQUETAS) ---
+                # --- GRÁFICO (0° EN EJE Y POSITIVO) ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
-                # Dibujar líneas guía cada 72°
+                # Dibujar líneas guía cada 72° empezando desde el Norte (Eje Y+)
                 for ang_guia in range(0, 360, 72):
-                    rad_g = math.radians(ang_guia)
-                    # Línea punteada opaca
-                    ax.plot([0, lim_max * 1.1 * math.cos(rad_g)], [0, lim_max * 1.1 * math.sin(rad_g)], 
+                    # Ajuste para que 0 sea arriba: restamos de 90 y convertimos a rad
+                    rad_plot = math.radians(90 - ang_guia) 
+                    
+                    # Línea punteada
+                    ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
                             color='gray', linestyle='--', linewidth=0.8, alpha=0.3)
-                    # Etiquetas de ángulos fuera de los ejes
-                    tx = lim_max * 1.15 * math.cos(rad_g)
-                    ty = lim_max * 1.15 * math.sin(rad_g)
+                    
+                    # Etiquetas de ángulos (fuera de los ejes para que no se crucen)
+                    tx = lim_max * 1.2 * math.cos(rad_plot)
+                    ty = lim_max * 1.2 * math.sin(rad_plot)
                     ax.text(tx, ty, f"{ang_guia}°", color='gray', fontsize=8, ha='center', va='center')
 
                 for i in range(3):
@@ -171,7 +174,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
                         bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
 
-                ax.set_xlim(-lim_max*1.3, lim_max*1.3); ax.set_ylim(-lim_max*1.3, lim_max*1.3)
+                ax.set_xlim(-lim_max*1.35, lim_max*1.35); ax.set_ylim(-lim_max*1.35, lim_max*1.35)
                 ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
                 
                 st.pyplot(fig, use_container_width=True)
@@ -179,7 +182,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                # --- FUNCIÓN PDF (AJUSTADA: NOMBRE MÁS ARRIBA) ---
+                # --- FUNCIÓN PDF (MANTIENE TÉCNICO ARRIBA) ---
                 def export_pdf():
                     pdf = FPDF()
                     pdf.add_page()
@@ -190,9 +193,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                     pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
                     pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                     pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2)
-                    
-                    # AJUSTE: Reducción de espacio para subir el nombre del técnico
-                    pdf.ln(5) 
+                    pdf.ln(5) # Subida del técnico
 
                     pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                     tz_ec = pytz.timezone('America/Guayaquil')
