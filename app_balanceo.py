@@ -175,7 +175,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                         if os.path.exists("LOGOUNACEM.jpg"):
                             pdf.image("LOGOUNACEM.jpg", x=88, y=10, w=30)
                         
-                        pdf.ln(38)
+                        pdf.ln(32)
                         pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
                         pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
                         pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2); pdf.ln(15)
