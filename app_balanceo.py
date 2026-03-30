@@ -95,7 +95,7 @@ with tab1:
             meds.append({'v': v, 'p': p, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO (LÓGICA DE CONVERGENCIA REAL) ---
-    if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
+   if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
         errores = []
         if not tecnico: errores.append("Nombre del Técnico")
         if v1 is None: errores.append("Vibración Inicial (V1)")
@@ -120,35 +120,27 @@ with tab1:
                 i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
                 if i12 and i23 and i31:
-                    # --- LÓGICA DE MÍNIMA DISTANCIA ENTRE PUNTOS (TRIÁNGULO REAL) ---
+                    # --- LÓGICA DE MÍNIMA DISTANCIA ---
                     mejor_tri = None
                     perimetro_minimo = float('inf')
-                    
                     for p1 in i12:
                         for p2 in i23:
                             for p3 in i31:
-                                # Calculamos la distancia entre cada par de puntos
                                 d12 = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
                                 d23 = math.sqrt((p2[0]-p3[0])**2 + (p2[1]-p3[1])**2)
                                 d31 = math.sqrt((p3[0]-p1[0])**2 + (p3[1]-p1[1])**2)
-                                
                                 perimetro = d12 + d23 + d31
-                                
                                 if perimetro < perimetro_minimo:
                                     perimetro_minimo = perimetro
                                     mejor_tri = (p1, p2, p3)
 
-                    # Cálculo del Baricentro (Punto de equilibrio)
-                    bx = sum(p[0] for p in mejor_tri) / 3
-                    by = sum(p[1] for p in mejor_tri) / 3
-                    
+                    bx, by = sum(p[0] for p in mejor_tri) / 3, sum(p[1] for p in mejor_tri) / 3
                     mag_res = math.sqrt(bx**2 + by**2)
                     ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
                     
                     p_prueba_avg = sum(m['p'] for m in meds) / 3
                     peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                     
-                    # Sectores 72°
                     sector = 72
                     lim_bajo = math.floor(ang_res / sector) * sector
                     lim_alto = lim_bajo + sector
@@ -160,23 +152,10 @@ with tab1:
                     ax.set_aspect('equal')
                     for i in range(3):
                         ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1))
-                    
                     ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.5))
                     ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                     
-                    # Etiqueta Roja
-                    ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
-                            color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
-
-                    # Ejes y ángulos fuera
                     lim_max = max([m['v'] + v1 for m in meds]) * 1.3
-                    for e in range(5):
-                        a_d = e * 72
-                        r_e = math.radians(a_d)
-                        ex, ey = -lim_max * math.sin(r_e), lim_max * math.cos(r_e)
-                        ax.plot([0, ex], [0, ey], color='gray', lw=0.6, ls=':', alpha=0.5)
-                        ax.text(-lim_max*1.12*math.sin(r_e), lim_max*1.12*math.cos(r_e), f"{a_d}°", ha='center', fontweight='bold', color='#444')
-
                     ax.set_xlim(-lim_max*1.3, lim_max*1.3); ax.set_ylim(-lim_max*1.3, lim_max*1.3)
                     ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
                     st.pyplot(fig, use_container_width=True)
@@ -184,84 +163,36 @@ with tab1:
                     instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
                     st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
 
-                    # --- 4. PDF ---
+                    # --- 4. FUNCIÓN PDF PERSONALIZADA ---
                     def export_pdf():
                         pdf = FPDF()
                         pdf.add_page()
-                        pdf.set_auto_page_break(auto=True, margin=15)
-                        
-                        # --- ENCABEZADO ---
-                        if os.path.exists("LOGOUNACEM.jpg"):
-                            pdf.image("LOGOUNACEM.jpg", x=10, y=10, w=35)
-                        
-                        pdf.set_font("Arial", "B", 18)
-                        pdf.set_text_color(20, 50, 100) # Azul oscuro corporativo
+                        if os.path.exists("LOGOUNACEM.jpg"): pdf.image("LOGOUNACEM.jpg", x=10, y=10, w=35)
+                        pdf.set_font("Arial", "B", 16); pdf.set_text_color(20, 50, 100)
                         pdf.cell(0, 15, "INFORME DE BALANCEO DINÁMICO", ln=True, align='R')
-                        pdf.set_draw_color(20, 50, 100)
-                        pdf.line(10, 32, 200, 32) # Línea divisoria
-                        pdf.ln(12)
-                    
-                        # --- INFORMACIÓN GENERAL (Dos columnas) ---
-                        pdf.set_font("Arial", "B", 10)
-                        pdf.set_text_color(0)
-                        pdf.cell(100, 8, f"TÉCNICO: {tecnico.upper()}", ln=0)
+                        pdf.line(10, 30, 200, 30); pdf.ln(10)
+                        
+                        pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
                         tz_ec = pytz.timezone('America/Guayaquil')
-                        pdf.cell(90, 8, f"FECHA: {fecha_hoy}  |  HORA: {datetime.now(tz_ec).strftime('%H:%M')}", ln=True, align='R')
-                        pdf.ln(5)
-                    
-                        # --- TABLA DE MEDICIONES ---
-                        pdf.set_fill_color(20, 50, 100)
-                        pdf.set_text_color(255)
-                        pdf.set_font("Arial", "B", 11)
-                        pdf.cell(0, 10, "  RESUMEN DE MEDICIONES", ln=True, fill=True)
+                        pdf.cell(100, 8, f"TÉCNICO: {tecnico.upper()}"); pdf.cell(90, 8, f"FECHA: {fecha_hoy} | {datetime.now(tz_ec).strftime('%H:%M')}", ln=True, align='R')
                         
-                        pdf.set_text_color(0)
-                        pdf.set_font("Arial", "B", 10)
-                        # Encabezados de tabla
-                        pdf.cell(60, 8, "Punto de Medición", border=1, align='C')
-                        pdf.cell(65, 8, "Vibración (mm/s)", border=1, align='C')
-                        pdf.cell(65, 8, "Peso de Prueba (g)", border=1, align='C', ln=True)
+                        pdf.ln(5); pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255)
+                        pdf.cell(0, 10, "  RESUMEN DE RESULTADOS", ln=True, fill=True)
+                        pdf.set_text_color(0); pdf.set_font("Arial", "", 10)
+                        pdf.multi_cell(0, 10, f"ACCIÓN: {instruccion}", border=1)
                         
-                        pdf.set_font("Arial", "", 10)
-                        # Datos de V1 (Inicial)
-                        pdf.cell(60, 8, "Vibración Inicial (V1)", border=1, align='C')
-                        pdf.cell(65, 8, f"{v1}", border=1, align='C')
-                        pdf.cell(65, 8, "-", border=1, align='C', ln=True)
-                        
-                        # Datos de V2, V3, V4
-                        for i, m in enumerate(meds, 2):
-                            pdf.cell(60, 8, f"Medición V{i}", border=1, align='C')
-                            pdf.cell(65, 8, f"{m['v']}", border=1, align='C')
-                            pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=True)
-                    
-                        # --- RESULTADOS Y ACCIÓN ---
-                        pdf.ln(8)
-                        pdf.set_fill_color(230, 240, 255) # Azul muy claro
-                        pdf.set_font("Arial", "B", 11)
-                        pdf.cell(0, 10, "  ACCIÓN RECOMENDADA", ln=True, fill=True)
-                        
-                        pdf.set_font("Arial", "B", 10)
-                        pdf.set_text_color(200, 0, 0) # Rojo para la instrucción
-                        pdf.multi_cell(0, 10, f"{instruccion}", border=1, align='C')
-                    
-                        # --- GRÁFICO VECTORIAL ---
-                        pdf.ln(5)
-                        buf = io.BytesIO()
-                        fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                        buf.seek(0)
-                        with open("temp_plt.png", "wb") as f:
-                            f.write(buf.read())
-                        
-                        # Centrar la imagen
-                        pdf.image("temp_plt.png", x=45, y=pdf.get_y() + 5, w=120)
-                        
-                        # Pie de página (Opcional)
-                        pdf.set_y(-25)
-                        pdf.set_font("Arial", "I", 8)
-                        pdf.set_text_color(128)
-                        pdf.cell(0, 10, "Este reporte fue generado automáticamente por el Sistema de Balanceo de Precisión.", align='C')
-                    
+                        buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=300); buf.seek(0)
+                        with open("temp_plt.png", "wb") as f: f.write(buf.read())
+                        pdf.image("temp_plt.png", x=45, y=pdf.get_y()+10, w=120)
                         return pdf.output(dest='S').encode('latin-1')
+
+                    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
+
+                else:
+                    st.error("❌ Los círculos no se cortan. Verifique lecturas.")
+            
+            except Exception as ex:
+                st.error(f"Error en el proceso: {ex}")
 
                 
 
