@@ -236,7 +236,7 @@ with tab2:
 
     st.markdown("""
     ### 1. Medición Inicial (V1)
-    *   Arranque la trituradora y mida el nivel de vibración global en el punto de apoyo.
+    *   Arranque la trituradora y mida el nivel de vibración global.
     *   Anote este valor como **Vibración Inicial (V1)** en la barra lateral.
     
     ### 2. Colocación de Pesos de Prueba
