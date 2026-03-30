@@ -94,64 +94,97 @@ with tab1:
             a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
             meds.append({'v': v, 'p': p, 'a': a})
 
-    # --- BOTÓN DE PROCESAMIENTO ---
-    if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
-        errores = []
-        if not tecnico: errores.append("Nombre del Técnico")
-        if v1 is None: errores.append("Vibración Inicial (V1)")
-        for i, m in enumerate(meds, 2):
-            if m['v'] is None: errores.append(f"Vibración V{i}")
-            if m['p'] is None: errores.append(f"Peso Prueba P{i}")
+ # --- BOTÓN DE PROCESAMIENTO ---
+if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
+    errores = []
+    # Validación de datos (con soporte para el valor None que configuramos)
+    if not tecnico: errores.append("Nombre del Técnico")
+    if v1 is None: errores.append("Vibración Inicial (V1)")
+    for i, m in enumerate(meds, 2):
+        if m['v'] is None: errores.append(f"Vibración V{i}")
+        if m['p'] is None: errores.append(f"Peso Prueba P{i}")
 
-        if errores:
-            st.error("⚠️ **Faltan datos obligatorios:**")
-            for e in errores: st.write(f"* {e}")
-        else:
-            try:
-                # 1. Centros de los círculos
-                centros = []
-                for m in meds:
-                    rad = math.radians(m['a'])
-                    centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
+    if errores:
+        st.error("⚠️ **Faltan datos obligatorios:**")
+        for e in errores: st.write(f"* {e}")
+    else:
+        try:
+            # 1. Centros de los círculos (Vectores V1 desplazados)
+            centros = []
+            for m in meds:
+                rad = math.radians(m['a'])
+                # Coordenadas rectangulares: x = -sen, y = cos para sistema de balanceo
+                centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-                # 2. Intersecciones
-                i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
-                i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
-                i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
+            # 2. Intersecciones entre pares de círculos
+            i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
+            i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
+            i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
-                if i12 and i23 and i31:
-                    min_area = float('inf')
-                    mejor_tri = None
-                    for p1 in i12:
-                        for p2 in i23:
-                            for p3 in i31:
-                                area = calcular_area(p1, p2, p3)
-                                if area < min_area:
-                                    min_area = area
-                                    mejor_tri = (p1, p2, p3)
+            if i12 and i23 and i31:
+                # Buscar el triángulo de error mínimo
+                min_area = float('inf')
+                mejor_tri = None
+                for p1 in i12:
+                    for p2 in i23:
+                        for p3 in i31:
+                            area = calcular_area(p1, p2, p3)
+                            if area < min_area:
+                                min_area = area
+                                mejor_tri = (p1, p2, p3)
 
-                    bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
-                    mag_res = math.sqrt(bx**2 + by**2)
-                    ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
-                    
-                    p_prueba_avg = sum(m['p'] for m in meds) / 3
-                    peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
-                    
-                    sector = 72
-                    lim_bajo = math.floor(ang_res / sector) * sector
-                    lim_alto = lim_bajo + sector
-                    rad_total = math.radians(sector)
-                    p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
-                    p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
+                # Centroide del triángulo (Punto de balanceo)
+                bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
+                mag_res = math.sqrt(bx**2 + by**2)
+                ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
+                
+                # Cálculo de pesos finales
+                p_prueba_avg = sum(m['p'] for m in meds) / 3
+                peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
+                
+                # Descomposición en sectores (72° para 5 álabes/puntos)
+                sector = 72
+                lim_bajo = math.floor(ang_res / sector) * sector
+                lim_alto = lim_bajo + sector
+                rad_total = math.radians(sector)
+                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(rad_total))
+                p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(rad_total))
 
-                    # 3. Gráfico con Valores de Módulo y Ángulo
-                    fig, ax = plt.subplots(figsize=(8,8))
-                    for i in range(3):
-                        ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--'))
-                    ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.6))
-                    
-                    # Vector de desbalance
-                    ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=2, headwidth=10))
+                # --- 3. GRÁFICO DE ALTA RESOLUCIÓN (Sin pixelado) ---
+                fig, ax = plt.subplots(figsize=(8,8), dpi=200) # DPI alto para nitidez
+                ax.set_aspect('equal')
+                
+                # Dibujar círculos de prueba
+                for i in range(3):
+                    c = plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.3, ls='--', lw=1)
+                    ax.add_patch(c)
+                
+                # Triángulo de solución
+                ax.add_patch(plt.Polygon(mejor_tri, color='#FDE047', alpha=0.5, label="Área de Incertidumbre"))
+                
+                # Vector de desbalance (Flecha roja nítida)
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                            arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
+                
+                ax.grid(True, linestyle=':', alpha=0.6)
+                ax.axhline(0, color='black', lw=1); ax.axvline(0, color='black', lw=1)
+                plt.title(f"Diagrama de Balanceo - {tecnico}", fontsize=12)
+
+                # Mostrar gráfico en Streamlit con ancho completo
+                st.pyplot(fig, use_container_width=True)
+
+                # --- RESULTADOS EN PANTALLA ---
+                col1, col2 = st.columns(2)
+                col1.metric("Peso Total de Corrección", f"{round(peso_total, 2)} g")
+                col2.metric("Ángulo de Aplicación", f"{round(ang_res, 1)}°")
+
+                # Aquí llamarías a la función de export_pdf() que definimos antes
+                # ...
+                
+            else:
+                st.error("❌ Los círculos no se cortan. Revisa que las unidades de vibración sean correctas.")
+        except Exception as ex:
+            st.error(f"Error crítico en el cálculo: {ex}")   
                     
                     # ETIQUETA DE VALORES EN EL GRÁFICO
                     ax.text(bx, by, f" Módulo: {round(mag_res, 2)} mm/s\n Ángulo: {round(ang_res, 1)}°", 
