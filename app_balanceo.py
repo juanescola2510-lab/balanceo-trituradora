@@ -14,16 +14,29 @@ import pytz
 st.set_page_config(page_title="Balanceo Trituradora 405CR01", layout="centered")
 
 # --- 1. LOGO Y TÍTULOS ---
-col_logo1, col_logo2, col_logo3 = st.columns([1, 2, 1])
+# Usamos columnas laterales más anchas para que la central sea pequeña y el logo no se estire
+col_logo1, col_logo2, col_logo3 = st.columns([2, 1, 2])
+
 with col_logo2:
     try:
-        imagen = Image.open("LOGOUNACEM.jpg") 
-        st.image(imagen, width=100) 
+        # Cargamos la imagen directamente. 
+        # Si el archivo original tiene buena resolución, se verá perfecto.
+        st.image("LOGOUNACEM.jpg", use_container_width=True, output_format="JPEG")
     except:
-        st.info("ℹ️ Archivo 'LOGOUNACEM.jpg' no encontrado para la vista previa.")
+        st.info("ℹ️ Logo no encontrado.")
 
-st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>⚖️ Sistema de Balanceo Trituradora</h1>", unsafe_allow_html=True)
-
+st.markdown("""
+    <style>
+    .titulo-principal {
+        text-align: center; 
+        color: #1E3A8A; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: bold;
+        margin-top: -15px;
+    }
+    </style>
+    <h1 class='titulo-principal'>⚖️ Sistema de Balanceo Trituradora</h1>
+""", unsafe_allow_html=True)
 # --- 2. CREACIÓN DE PESTAÑAS ---
 tab1, tab2 = st.tabs(["📊 Calculador de Balanceo", "📖 Procedimiento Técnico"])
 
