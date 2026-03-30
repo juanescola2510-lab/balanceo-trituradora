@@ -35,7 +35,7 @@ st.markdown("""
         margin-top: -15px;
     }
     </style>
-    <h1 class='titulo-principal'>⚖️ Sistema de Balanceo Trituradora</h1>
+    <h1 class='titulo-principal'>Sistema de Balanceo Trituradora ⚖️</h1>
 """, unsafe_allow_html=True)
 # --- 2. CREACIÓN DE PESTAÑAS ---
 tab1, tab2 = st.tabs(["📊 Calculador de Balanceo", "📖 Procedimiento Técnico"])
