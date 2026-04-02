@@ -155,7 +155,3 @@ if st.button("⚖️ CALCULAR Y GRAFICAR", type="primary", use_container_width=T
 
 st.markdown("---")
 st.caption(f"Generado por {tecnico if tecnico else 'Sistema'} - {date.today()}")
-Usa el código con precaución.
-
-Instrucciones de uso:
-Instala las librerías si no las tienes: pip install streamlit matplotlib numpy.
