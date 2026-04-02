@@ -137,11 +137,5 @@ if st.button("CALCULAR BALANCEO", type="primary", use_container_width=True):
             st.pyplot(fig)
     else:
         st.error("Por favor, ingresa valores válidos de vibración.")
-Usa el código con precaución.
-
-¿Qué hace este código nuevo?
-Parámetro n_aletas: Calcula automáticamente el ángulo entre cada una (ej. 360/5 = 72°, 360/4 = 90°).
-Lógica de Sentido: Si eliges Horario, el programa invierte la dirección de los ángulos para que el gráfico y el cálculo coincidan con lo que ves físicamente en el rotor.
-Repartición de Pesos: Si el punto de equilibrio cae entre la aleta 1 (0°) y la aleta 2 (72°), te dice exactamente cuántos gramos poner en cada una usando la ley de senos.
 
                    
