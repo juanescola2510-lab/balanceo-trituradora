@@ -155,10 +155,3 @@ if st.button("⚖️ CALCULAR Y GRAFICAR", type="primary", use_container_width=T
 
 st.markdown("---")
 st.caption(f"Sistema de Balanceo Universal - {date.today()} | Técnico: {tecnico if tecnico else 'No especificado'}")
-Usa el código con precaución.
-
-Cambios realizados:
-Lógica del Vector: Se eliminó la suma de 
- al ángulo resultante. Ahora el vector verde (corrección) apunta directamente hacia el centro del triángulo formado por la intersección de los tres círculos.
-Cálculo de Aletas: La tabla de pesos ahora descompone el vector de corrección directamente en las dos aletas más cercanas a ese punto de intersección.
-Visualización: El gráfico muestra claramente cómo las circunferencias se cruzan en un punto, y el vector nace del centro del rotor hacia ese punto específico.
