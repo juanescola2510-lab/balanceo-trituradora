@@ -98,24 +98,25 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
         st.error("⚠️ Faltan datos obligatorios.")
     else:
         try:
-            # 1. SENTIDO DE GIRO (CCW: +, CW: -)
-            # Para que 72° esté a la IZQUIERDA en Antihorario, debemos SUMAR al ángulo base (90°)
+            # 1. SENTIDO DE GIRO (CCW: 72° a la izquierda | CW: 72° a la derecha)
             s_mult = 1 if sentido == "Antihorario (CCW)" else -1
 
-            # 2. CÁLCULO DE CENTROS
+            # 2. CÁLCULO DE CENTROS (Corregido para evitar error de listas)
             centros_base = []
             for m in meds:
-                # 90° es el Norte. En CCW (s_mult=1), sumamos para ir a la izquierda.
+                # 0° Norte. En CCW sumamos para ir a la izquierda.
                 rad = math.radians(90 + (m['a'] * s_mult))
-                # Centro opuesto a la masa
+                # Centro opuesto a la masa de prueba
                 cx = -v1 * math.cos(rad)
                 cy = -v1 * math.sin(rad)
                 centros_base.append((cx, cy))
 
-            # 3. INTERSECCIONES Y BARICENTRO
-            i12 = obtener_interseccion(centros_base, centros_base, centros_base, centros_base, meds[0]['v'], meds[1]['v'])
-            i23 = obtener_interseccion(centros_base, centros_base, centros_base, centros_base, meds[1]['v'], meds[2]['v'])
-            i31 = obtener_interseccion(centros_base, centros_base, centros_base, centros_base, meds[2]['v'], meds[0]['v'])
+            # 3. INTERSECCIONES (Pasando valores individuales para evitar el error 'list' - 'list')
+            c1, c2, c3 = centros_base[0], centros_base[1], centros_base[2]
+            
+            i12 = obtener_interseccion(c1[0], c1[1], c2[0], c2[1], meds[0]['v'], meds[1]['v'])
+            i23 = obtener_interseccion(c2[0], c2[1], c3[0], c3[1], meds[1]['v'], meds[2]['v'])
+            i31 = obtener_interseccion(c3[0], c3[1], c1[0], c1[1], meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
                 mejor_tri = None
@@ -123,10 +124,14 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 for p1 in i12:
                     for p2 in i23:
                         for p3 in i31:
-                            d = math.dist(p1,p2) + math.dist(p2,p3) + math.dist(p3,p1)
-                            if d < per_min: per_min = d; mejor_tri = (p1, p2, p3)
+                            d = math.dist(p1, p2) + math.dist(p2, p3) + math.dist(p3, p1)
+                            if d < per_min:
+                                per_min = d
+                                mejor_tri = (p1, p2, p3)
 
-                bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
+                # Baricentro
+                bx = sum(p[0] for p in mejor_tri) / 3
+                by = sum(p[1] for p in mejor_tri) / 3
                 mag_res = math.sqrt(bx**2 + by**2)
                 
                 # Ángulo final: 0° Norte, sentido según s_mult
@@ -142,19 +147,17 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
 
-                # --- 5. GRÁFICO CORREGIDO ---
+                # --- 5. GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
                 for ang_guia in range(0, 360, 72):
-                    # Lógica CCW: 90 + ang | Lógica CW: 90 - ang
                     rad_plot = math.radians(90 + (ang_guia * s_mult)) 
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
                             color='gray', linestyle='--', alpha=0.4)
-                    
-                    tx, ty = lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot)
-                    ax.text(tx, ty, f"{ang_guia}°", ha='center', va='center', fontweight='bold')
+                    ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
+                            f"{ang_guia}°", ha='center', va='center', fontweight='bold')
 
                 for i in range(3):
                     ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.5))
@@ -169,7 +172,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
                 st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
             
-        
+           
             
          
             
