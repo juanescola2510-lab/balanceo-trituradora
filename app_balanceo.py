@@ -93,168 +93,168 @@ with st.sidebar:
         meds.append({'v': v, 'p': p_prueba, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO ---
-if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
-    if not tecnico or v1 is None or p_prueba is None or any(m['v'] is None for m in meds):
-        st.error("⚠️ Faltan datos obligatorios.")
-    else:
-        try:
-            # 1. DEFINICIÓN DE SENTIDO (CCW: 72° a la Izquierda | CW: 72° a la Derecha)
-            # Para 0° en el Norte (90° rad):
-            # Antihorario (CCW): Sumamos al ángulo base -> 90 + ang
-            # Horario (CW): Restamos al ángulo base -> 90 - ang
-            s_mult = 1 if sentido == "Antihorario (CCW)" else -1
-
-            # 2. CÁLCULO DE CENTROS (Ubicación física de las masas de prueba)
-            centros_base = []
-            for m in meds:
-                # Calculamos el ángulo en radianes para el gráfico (Matplotlib)
-                rad = math.radians(90 + (m['a'] * s_mult))
-                # Los centros de los círculos se ubican sobre el radio V1
-                cx = v1 * math.cos(rad)
-                cy = v1 * math.sin(rad)
-                centros_base.append((cx, cy))
-
-            # 3. INTERSECCIONES (Pasando coordenadas individuales para evitar error de listas)
-            # Extraemos x, y de cada centro para la función geométrica
-            c1x, c1y = centros_base[0][0], centros_base[0][1]
-            c2x, c2y = centros_base[1][0], centros_base[1][1]
-            c3x, c3y = centros_base[2][0], centros_base[2][1]
-            
-            i12 = obtener_interseccion(c1x, c1y, c2x, c2y, meds[0]['v'], meds[1]['v'])
-            i23 = obtener_interseccion(c2x, c2y, c3x, c3y, meds[1]['v'], meds[2]['v'])
-            i31 = obtener_interseccion(c3x, c3y, c1x, c1y, meds[2]['v'], meds[0]['v'])
-
-            if i12 and i23 and i31:
-                # Hallar el mejor triángulo (el más pequeño)
-                mejor_tri = None
-                per_min = float('inf')
-                for p1 in i12:
-                    for p2 in i23:
-                        for p3 in i31:
-                            d = math.dist(p1, p2) + math.dist(p2, p3) + math.dist(p3, p1)
-                            if d < per_min:
-                                per_min = d
-                                mejor_tri = (p1, p2, p3)
-
-                # Baricentro (Punto Pesado)
-                bx = sum(p[0] for p in mejor_tri) / 3
-                by = sum(p[1] for p in mejor_tri) / 3
-                mag_res = math.sqrt(bx**2 + by**2)
+    if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
+        if not tecnico or v1 is None or p_prueba is None or any(m['v'] is None for m in meds):
+            st.error("⚠️ Faltan datos obligatorios.")
+        else:
+            try:
+                # 1. DEFINICIÓN DE SENTIDO (CCW: 72° a la Izquierda | CW: 72° a la Derecha)
+                # Para 0° en el Norte (90° rad):
+                # Antihorario (CCW): Sumamos al ángulo base -> 90 + ang
+                # Horario (CW): Restamos al ángulo base -> 90 - ang
+                s_mult = 1 if sentido == "Antihorario (CCW)" else -1
+    
+                # 2. CÁLCULO DE CENTROS (Ubicación física de las masas de prueba)
+                centros_base = []
+                for m in meds:
+                    # Calculamos el ángulo en radianes para el gráfico (Matplotlib)
+                    rad = math.radians(90 + (m['a'] * s_mult))
+                    # Los centros de los círculos se ubican sobre el radio V1
+                    cx = v1 * math.cos(rad)
+                    cy = v1 * math.sin(rad)
+                    centros_base.append((cx, cy))
+    
+                # 3. INTERSECCIONES (Pasando coordenadas individuales para evitar error de listas)
+                # Extraemos x, y de cada centro para la función geométrica
+                c1x, c1y = centros_base[0][0], centros_base[0][1]
+                c2x, c2y = centros_base[1][0], centros_base[1][1]
+                c3x, c3y = centros_base[2][0], centros_base[2][1]
                 
-                # ÁNGULO RESULTANTE (Convertir de Math a Usuario)
-                # ang_math es el ángulo de Matplotlib (0° a la derecha)
-                ang_math = math.degrees(math.atan2(by, bx))
-                # Convertimos a 0° Norte y sentido del usuario
-                ang_res = ((ang_math - 90) * s_mult) % 360
-                
-                peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
-                
-                # REPARTICIÓN (72°)
-                sector = 72
-                lim_bajo = math.floor(ang_res / sector) * sector
-                lim_alto = (lim_bajo + sector) % 360
-                p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
-                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
-
-                # --- 4. GRÁFICO ---
-                fig, ax = plt.subplots(figsize=(8,8), dpi=200)
-                ax.set_aspect('equal')
-                lim_max = max([m['v'] + v1 for m in meds]) * 1.3
-                
-                # Dibujo de Guías y Etiquetas
-                for ang_guia in range(0, 360, 72):
-                    rad_plot = math.radians(90 + (ang_guia * s_mult)) 
-                    ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
-                            color='gray', linestyle='--', alpha=0.4)
-                    ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
-                            f"{ang_guia}°", ha='center', va='center', fontweight='bold')
-
-                # Círculos (Ahora sí alineados con las guías)
-                colores = ['#3B82F6', '#10B981', '#F59E0B']
-                for i in range(3):
-                    ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.5))
-                
-                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                
-                # Flecha pequeña
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-                            arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
-                
-                # --- ETIQUETA TÉCNICA ---
-                info_text = (
-                    f"Módulo: {round(mag_res, 2)} mm/s\n"
-                    f"Ángulo: {round(ang_res, 1)}°\n"
-                    f"Peso Total: {round(peso_total, 2)} g"
-                )
-
-                ax.text(0.95, 0.95, info_text, 
-                        transform=ax.transAxes, 
-                        fontsize=10, 
-                        fontweight='bold',
-                        color='red',
-                        va='top', 
-                        ha='right',
-                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
-
-                ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
-                ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
-                
-                st.pyplot(fig, use_container_width=True)
-
-                # RESULTADOS
-                st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
-          
-            
-         
-            
-
-                # --- FUNCIÓN PDF ---
-                def export_pdf():
-                    pdf = FPDF()
-                    pdf.add_page()
-                    if os.path.exists("LOGOUNACEM.jpg"):
-                        pdf.image("LOGOUNACEM.jpg", x=88, y=10, w=30)
+                i12 = obtener_interseccion(c1x, c1y, c2x, c2y, meds[0]['v'], meds[1]['v'])
+                i23 = obtener_interseccion(c2x, c2y, c3x, c3y, meds[1]['v'], meds[2]['v'])
+                i31 = obtener_interseccion(c3x, c3y, c1x, c1y, meds[2]['v'], meds[0]['v'])
+    
+                if i12 and i23 and i31:
+                    # Hallar el mejor triángulo (el más pequeño)
+                    mejor_tri = None
+                    per_min = float('inf')
+                    for p1 in i12:
+                        for p2 in i23:
+                            for p3 in i31:
+                                d = math.dist(p1, p2) + math.dist(p2, p3) + math.dist(p3, p1)
+                                if d < per_min:
+                                    per_min = d
+                                    mejor_tri = (p1, p2, p3)
+    
+                    # Baricentro (Punto Pesado)
+                    bx = sum(p[0] for p in mejor_tri) / 3
+                    by = sum(p[1] for p in mejor_tri) / 3
+                    mag_res = math.sqrt(bx**2 + by**2)
                     
-                    pdf.ln(32)
-                    pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
-                    pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
-                    pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2)
-                    pdf.ln(5) # Técnico más arriba
-
-                    pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
-                    tz_ec = pytz.timezone('America/Guayaquil')
-                    ahora = datetime.now(tz_ec)
-                    pdf.cell(95, 8, f"TÉCNICO: {tecnico.upper()}", ln=0)
-                    pdf.cell(95, 8, f"FECHA: {ahora.strftime('%d/%m/%Y')} | HORA: {ahora.strftime('%H:%M:%S')}", ln=1, align='R')
-                    pdf.ln(5)
-
-                    pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
-                    pdf.cell(0, 10, "  VALORES MEDIDOS", ln=True, fill=True)
-                    pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
-                    pdf.cell(60, 8, "Punto", border=1, align='C'); pdf.cell(65, 8, "Vibración (mm/s)", border=1, align='C'); pdf.cell(65, 8, "Peso Prueba (g)", border=1, align='C', ln=1)
-                    pdf.set_font("Arial", "", 10)
-                    pdf.cell(60, 8, "V1 (Inicial)", border=1, align='C'); pdf.cell(65, 8, f"{v1}", border=1, align='C'); pdf.cell(65, 8, "-", border=1, align='C', ln=1)
-                    for i, m in enumerate(meds, 2):
-                        pdf.cell(60, 8, f"V{i}", border=1, align='C'); pdf.cell(65, 8, f"{m['v']}", border=1, align='C'); pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=1)
-
-                    pdf.ln(8)
-                    pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
-                    pdf.cell(0, 10, "  RESULTADOS DE COMPENSACIÓN", ln=True, fill=True)
-                    pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
-                    pdf.cell(47, 8, "Peso Total (g)", border=1, align='C'); pdf.cell(47, 8, "Ángulo Corr.", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_bajo} (g)", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_alto} (g)", border=1, align='C', ln=1)
-                    pdf.cell(47, 10, f"{round(peso_total, 2)}", border=1, align='C'); pdf.cell(47, 10, f"{round(ang_res, 1)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_bajo, 2)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_alto, 2)}", border=1, align='C', ln=1)
-
-                    buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
-                    with open("temp_plt.png", "wb") as f: f.write(buf.read())
-                    pdf.image("temp_plt.png", x=55, y=pdf.get_y()+10, w=100)
-                    return pdf.output(dest='S').encode('latin-1')
-
-                st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
-
-            else:
-                st.error("❌ Los círculos no se cortan.")
-        except Exception as ex:
-            st.error(f"Error: {ex}")
+                    # ÁNGULO RESULTANTE (Convertir de Math a Usuario)
+                    # ang_math es el ángulo de Matplotlib (0° a la derecha)
+                    ang_math = math.degrees(math.atan2(by, bx))
+                    # Convertimos a 0° Norte y sentido del usuario
+                    ang_res = ((ang_math - 90) * s_mult) % 360
+                    
+                    peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
+                    
+                    # REPARTICIÓN (72°)
+                    sector = 72
+                    lim_bajo = math.floor(ang_res / sector) * sector
+                    lim_alto = (lim_bajo + sector) % 360
+                    p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
+                    p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
+    
+                    # --- 4. GRÁFICO ---
+                    fig, ax = plt.subplots(figsize=(8,8), dpi=200)
+                    ax.set_aspect('equal')
+                    lim_max = max([m['v'] + v1 for m in meds]) * 1.3
+                    
+                    # Dibujo de Guías y Etiquetas
+                    for ang_guia in range(0, 360, 72):
+                        rad_plot = math.radians(90 + (ang_guia * s_mult)) 
+                        ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
+                                color='gray', linestyle='--', alpha=0.4)
+                        ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
+                                f"{ang_guia}°", ha='center', va='center', fontweight='bold')
+    
+                    # Círculos (Ahora sí alineados con las guías)
+                    colores = ['#3B82F6', '#10B981', '#F59E0B']
+                    for i in range(3):
+                        ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.5))
+                    
+                    ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
+                    
+                    # Flecha pequeña
+                    ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                                arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
+                    
+                    # --- ETIQUETA TÉCNICA ---
+                    info_text = (
+                        f"Módulo: {round(mag_res, 2)} mm/s\n"
+                        f"Ángulo: {round(ang_res, 1)}°\n"
+                        f"Peso Total: {round(peso_total, 2)} g"
+                    )
+    
+                    ax.text(0.95, 0.95, info_text, 
+                            transform=ax.transAxes, 
+                            fontsize=10, 
+                            fontweight='bold',
+                            color='red',
+                            va='top', 
+                            ha='right',
+                            bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
+    
+                    ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
+                    ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
+                    
+                    st.pyplot(fig, use_container_width=True)
+    
+                    # RESULTADOS
+                    st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
+              
+                
+             
+                
+    
+                    # --- FUNCIÓN PDF ---
+                    def export_pdf():
+                        pdf = FPDF()
+                        pdf.add_page()
+                        if os.path.exists("LOGOUNACEM.jpg"):
+                            pdf.image("LOGOUNACEM.jpg", x=88, y=10, w=30)
+                        
+                        pdf.ln(32)
+                        pdf.set_font("Arial", "B", 18); pdf.set_text_color(20, 50, 100)
+                        pdf.cell(0, 10, "REPORTE TÉCNICO DE BALANCEO", ln=True, align='C')
+                        pdf.set_draw_color(20, 50, 100); pdf.line(20, pdf.get_y()+2, 190, pdf.get_y()+2)
+                        pdf.ln(5) # Técnico más arriba
+    
+                        pdf.set_font("Arial", "B", 10); pdf.set_text_color(0)
+                        tz_ec = pytz.timezone('America/Guayaquil')
+                        ahora = datetime.now(tz_ec)
+                        pdf.cell(95, 8, f"TÉCNICO: {tecnico.upper()}", ln=0)
+                        pdf.cell(95, 8, f"FECHA: {ahora.strftime('%d/%m/%Y')} | HORA: {ahora.strftime('%H:%M:%S')}", ln=1, align='R')
+                        pdf.ln(5)
+    
+                        pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
+                        pdf.cell(0, 10, "  VALORES MEDIDOS", ln=True, fill=True)
+                        pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
+                        pdf.cell(60, 8, "Punto", border=1, align='C'); pdf.cell(65, 8, "Vibración (mm/s)", border=1, align='C'); pdf.cell(65, 8, "Peso Prueba (g)", border=1, align='C', ln=1)
+                        pdf.set_font("Arial", "", 10)
+                        pdf.cell(60, 8, "V1 (Inicial)", border=1, align='C'); pdf.cell(65, 8, f"{v1}", border=1, align='C'); pdf.cell(65, 8, "-", border=1, align='C', ln=1)
+                        for i, m in enumerate(meds, 2):
+                            pdf.cell(60, 8, f"V{i}", border=1, align='C'); pdf.cell(65, 8, f"{m['v']}", border=1, align='C'); pdf.cell(65, 8, f"{m['p']}", border=1, align='C', ln=1)
+    
+                        pdf.ln(8)
+                        pdf.set_fill_color(20, 50, 100); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
+                        pdf.cell(0, 10, "  RESULTADOS DE COMPENSACIÓN", ln=True, fill=True)
+                        pdf.set_text_color(0); pdf.set_font("Arial", "B", 10)
+                        pdf.cell(47, 8, "Peso Total (g)", border=1, align='C'); pdf.cell(47, 8, "Ángulo Corr.", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_bajo} (g)", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_alto} (g)", border=1, align='C', ln=1)
+                        pdf.cell(47, 10, f"{round(peso_total, 2)}", border=1, align='C'); pdf.cell(47, 10, f"{round(ang_res, 1)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_bajo, 2)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_alto, 2)}", border=1, align='C', ln=1)
+    
+                        buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=300, bbox_inches='tight'); buf.seek(0)
+                        with open("temp_plt.png", "wb") as f: f.write(buf.read())
+                        pdf.image("temp_plt.png", x=55, y=pdf.get_y()+10, w=100)
+                        return pdf.output(dest='S').encode('latin-1')
+    
+                    st.download_button("📥 DESCARGAR REPORTE (PDF)", data=export_pdf(), file_name=f"Reporte_{fecha_hoy}.pdf", mime="application/pdf", use_container_width=True)
+    
+                else:
+                    st.error("❌ Los círculos no se cortan.")
+            except Exception as ex:
+                st.error(f"Error: {ex}")
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
