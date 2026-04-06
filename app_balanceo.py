@@ -98,24 +98,30 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
         st.error("⚠️ Faltan datos obligatorios.")
     else:
         try:
-            # 1. DETERMINAR DIRECCIÓN (CCW: +, CW: -)
-            # Para 0° arriba (Norte), CCW suma grados a 90° y CW resta grados a 90°.
+            # 1. SENTIDO DE GIRO (CW = Horario, CCW = Antihorario)
             s_mult = 1 if sentido == "Antihorario (CCW)" else -1
 
-            # 2. CÁLCULO DE CENTROS FÍSICOS (Ubicación real de las masas de prueba)
+            # 2. CÁLCULO DE CENTROS (Ubicación de las masas de prueba)
+            # Para 0° Norte (Y+), el centro del círculo de influencia se ubica 
+            # en la dirección opuesta a la masa de prueba.
             centros_base = []
             for m in meds:
-                # Ajuste: 90° es el Norte. Sumamos o restamos según el sentido elegido.
+                # Matemática polar estándar: 90° es el Norte.
+                # Restamos el ángulo si es CW para que avance hacia la derecha (X+).
                 rad = math.radians(90 - (m['a'] * s_mult))
-                # El centro se coloca en la dirección opuesta a la masa (-v1)
-                centros_base.append((-v1 * math.cos(rad), -v1 * math.sin(rad)))
+                # El centro se desplaza la magnitud v1 en dirección OPUESTA a la masa (-v1)
+                cx = -v1 * math.cos(rad)
+                cy = -v1 * math.sin(rad)
+                centros_base.append((cx, cy))
 
             # 3. INTERSECCIONES Y BARICENTRO
+            # Se resuelven las intersecciones de los 3 círculos
             i12 = obtener_interseccion(centros_base[0][0], centros_base[0][1], centros_base[1][0], centros_base[1][1], meds[0]['v'], meds[1]['v'])
             i23 = obtener_interseccion(centros_base[1][0], centros_base[1][1], centros_base[2][0], centros_base[2][1], meds[1]['v'], meds[2]['v'])
             i31 = obtener_interseccion(centros_base[2][0], centros_base[2][1], centros_base[0][0], centros_base[0][1], meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
+                # Hallar el triángulo de intersección más pequeño
                 mejor_tri = None
                 per_min = float('inf')
                 for p1 in i12:
@@ -124,62 +130,60 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                             d = math.dist(p1,p2) + math.dist(p2,p3) + math.dist(p3,p1)
                             if d < per_min: per_min = d; mejor_tri = (p1, p2, p3)
 
+                # Punto resultante (Baricentro del triángulo)
                 bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
                 mag_res = math.sqrt(bx**2 + by**2)
                 
-                # Calculamos el ángulo desde el Norte (Y+) hacia el sentido elegido
-                ang_raw = math.degrees(math.atan2(bx, by)) # Ángulo matemático estándar
-                ang_res = ( (90 - ang_raw) * s_mult ) % 360
+                # Cálculo del ángulo final: 0° es Y+, se mide según el sentido (s_mult)
+                # ang_math es el ángulo estándar (0° a la derecha)
+                ang_math = math.degrees(math.atan2(by, bx))
+                ang_res = ( (90 - ang_math) * s_mult ) % 360
                 
                 peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
                 
-                # 4. REPARTICIÓN DE PESOS (Fórmula estable)
+                # 4. REPARTICIÓN DE PESOS (72°)
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
                 lim_alto = (lim_bajo + sector) % 360
-                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
+                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
 
-                # --- 5. GRÁFICO CORREGIDO ---
+                # --- 5. GRÁFICO FINAL CORREGIDO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
-                # Dibujo de Guías Angulares (Respetando el sentido)
+                # Guías Angulares (Respetando el sentido Horario/Antihorario)
                 for ang_guia in range(0, 360, 72):
-                    # Aquí está el cambio clave: 90 - (ang * s_mult)
                     rad_plot = math.radians(90 - (ang_guia * s_mult)) 
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
-                            color='gray', linestyle='--', alpha=0.4)
-                    
-                    # Etiquetas de los ángulos
+                            color='gray', linestyle='--', alpha=0.4, linewidth=1)
+                    # Etiquetas
                     tx, ty = lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot)
                     ax.text(tx, ty, f"{ang_guia}°", ha='center', va='center', fontweight='bold', fontsize=10)
 
-                # Dibujo de Círculos y Triángulo (Ya calculados con s_mult)
+                # Dibujo de Círculos
                 for i in range(3):
-                    ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.2))
+                    ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.5))
                 
+                # Triángulo de intersección y Flecha de corrección
                 ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3, edgecolor='darkred'))
-                
-                # Flecha pequeña
                 ax.annotate('', xy=(bx, by), xytext=(0, 0), 
                             arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
                 
-                # Ajustes finales del eje
+                # Ejes de referencia
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
                 ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
                 st.pyplot(fig, use_container_width=True)
 
-                # RESULTADOS
-                st.success(f"✅ **RESULTADO:** Peso Total de **{round(peso_total, 2)}g**")
-                res_c1, res_c2 = st.columns(2)
-                res_c1.info(f"**Punto {lim_bajo}°**\n\n Peso: {round(p_bajo, 2)} g")
-                res_c2.info(f"**Punto {lim_alto}°**\n\n Peso: {round(p_alto, 2)} g")
+                # RESULTADOS EN PANTALLA
+                st.success(f"✅ **BALANCEO:** Peso Total de **{round(peso_total, 2)}g**")
+                c1, c2 = st.columns(2)
+                c1.info(f"**Punto {lim_bajo}°**\n\n Peso: {round(p_bajo, 2)} g")
+                c2.info(f"**Punto {lim_alto}°**\n\n Peso: {round(p_alto, 2)} g")
             
-          
-
+         
             
 
                 # --- FUNCIÓN PDF ---
