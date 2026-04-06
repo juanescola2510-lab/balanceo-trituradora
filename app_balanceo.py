@@ -167,7 +167,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
 
                 for i in range(3):
                     ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, ls='--', lw=1))
-                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.5))
+                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
                 ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
                 
                 ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
