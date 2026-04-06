@@ -173,11 +173,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
                 st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
             
-            else:
-                st.warning("⚠️ Sin intersección clara. Verifique datos.")
-
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+            
 
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
