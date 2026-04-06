@@ -63,21 +63,21 @@ def obtener_interseccion(c1x, c1y, c2x, c2y, r1, r2):
 def calcular_area(p1, p2, p3):
     return 0.5 * abs(p1[0]*(p2[1] - p3[1]) + p2[0]*(p3[1] - p1[1]) + p3[0]*(p1[1] - p2[1]))
 
-# --- PESTAÑA 1: CALCULADOR ---
-with tab1:
-    st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
-    
-        # --- 1. CONFIGURACIÓN EN LA BARRA LATERAL (SIDEBAR) ---
-with st.sidebar:
-    st.header("👤 Datos del Servicio")
-    tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
-    fecha_hoy = st.date_input("Fecha", date.today())
-    
-    st.divider()
-    # ESTA LÍNEA ES LA QUE FALTABA O ESTABA DESPUÉS:
-    sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
-    
-    st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
+    # --- PESTAÑA 1: CALCULADOR ---
+    with tab1:
+        st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
+        
+            # --- 1. CONFIGURACIÓN EN LA BARRA LATERAL (SIDEBAR) ---
+    with st.sidebar:
+        st.header("👤 Datos del Servicio")
+        tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
+        fecha_hoy = st.date_input("Fecha", date.today())
+        
+        st.divider()
+        # ESTA LÍNEA ES LA QUE FALTABA O ESTABA DESPUÉS:
+        sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
+        
+        st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
 
         st.header("📥 Mediciones")
         # Texto opaco para vibración mm/s
