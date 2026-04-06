@@ -67,111 +67,101 @@ def calcular_area(p1, p2, p3):
 with tab1:
     st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
     
-        # --- BARRA LATERAL ---
+                # --- BARRA LATERAL ---
 with st.sidebar:
     st.header("👤 Datos del Servicio")
-    tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
+    tecnico = st.text_input("Técnico Responsable", key="tec_val")
     fecha_hoy = st.date_input("Fecha", date.today())
     
     st.divider()
-    # Selector de sentido (Debe estar aquí para que el botón lo reconozca)
+    # Este selector ahora solo afectará la ESTÉTICA del gráfico y el texto
     sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
     
     st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
 
     st.header("📥 Mediciones")
-    v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", step=0.1, key="v1_val")
+    v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", key="v1_val")
     
-    # PESO DE PRUEBA ÚNICO
-    st.subheader("⚖️ Masa de Prueba")
     p_prueba = st.number_input("Peso de prueba único (gramos)", value=None, placeholder="g", key="p_unico")
     
-    st.divider()
     meds = []
     for i in range(2, 5):
         st.subheader(f"Medición {i}")
-        v = st.number_input(f"Vibración V{i}", value=None, placeholder="mm/s", key=f"v{i}_val")
-        
+        v = st.number_input(f"Vibración V{i}", value=None, key=f"v{i}_val")
         a_def = float((i-2)*120.0)
         a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
-        # Guardamos v y a; el peso 'p' será el p_prueba único
         meds.append({'v': v, 'p': p_prueba, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO ---
 if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
-    s_mult = 1 if sentido == "Antihorario (CCW)" else -1
+    # s_mult solo para el dibujo del gráfico
+    s_mult_plot = 1 if sentido == "Antihorario (CCW)" else -1
     
-    errores = []
-    if not tecnico: errores.append("Nombre del Técnico")
-    if v1 is None: errores.append("Vibración Inicial (V1)")
-    if p_prueba is None: errores.append("Peso de Prueba Único")
-    for i, m in enumerate(meds, 2):
-        if m['v'] is None: errores.append(f"Vibración V{i}")
-
-    if errores:
-        st.error("⚠️ **Faltan datos obligatorios:**")
-        for e in errores: st.write(f"* {e}")
+    if not tecnico or v1 is None or p_prueba is None or any(m['v'] is None for m in meds):
+        st.error("⚠️ Faltan datos obligatorios.")
     else:
         try:
-            # --- CÁLCULOS ---
+            # --- CÁLCULOS ESTÁNDAR (Siempre Antihorario para no afectar pesos) ---
             centros = []
             for m in meds:
-                # 0° Norte (Y+), sentido según s_mult
-                rad = math.radians(90 - (m['a'] * s_mult))
-                centros.append((v1 * math.cos(rad + math.pi), v1 * math.sin(rad + math.pi)))
+                rad = math.radians(m['a'])
+                # Lógica original: 0° Norte
+                centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
+            # Intersecciones
             i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
             i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
             i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
+                # Hallar mejor triángulo y baricentro
                 mejor_tri = None
-                perimetro_minimo = float('inf')
+                per_min = float('inf')
                 for p1 in i12:
                     for p2 in i23:
                         for p3 in i31:
-                            d = math.dist(p1, p2) + math.dist(p2, p3) + math.dist(p3, p1)
-                            if d < perimetro_minimo:
-                                perimetro_minimo = d
-                                mejor_tri = (p1, p2, p3)
+                            d = math.dist(p1,p2) + math.dist(p2,p3) + math.dist(p3,p1)
+                            if d < per_min: per_min = d; mejor_tri = (p1, p2, p3)
 
-                bx, by = sum(p[0] for p in mejor_tri) / 3, sum(p[1] for p in mejor_tri) / 3
+                bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
                 mag_res = math.sqrt(bx**2 + by**2)
                 
-                # Ajuste de ángulo final
-                ang_raw = math.degrees(math.atan2(bx, by))
-                ang_res = (ang_raw * s_mult + 360) % 360
-                
+                # ÁNGULO RESULTANTE (Fórmula original que funcionaba bien)
+                ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
                 peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
                 
-                # Repartición 72°
+                # REPARTICIÓN ORIGINAL (Intacta)
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
-                lim_alto = (lim_bajo + sector) % 360
-                rad_dif, rad_sec = math.radians(ang_res - lim_bajo), math.radians(sector)
-                p_alto = peso_total * (math.sin(rad_dif) / math.sin(rad_sec))
-                p_bajo = peso_total * (math.sin(rad_sec - rad_dif) / math.sin(rad_sec))
+                lim_alto = lim_bajo + sector
+                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
+                p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                # --- GRÁFICO ---
+                # --- GRÁFICO (Ajuste visual de sentido sin cambiar coordenadas reales) ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
                 for ang_guia in range(0, 360, 72):
-                    rad_plot = math.radians(90 - (ang_guia * s_mult)) 
-                    ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], color='gray', linestyle='--', alpha=0.4)
-                    ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), f"{ang_guia}°", ha='center', fontweight='bold')
+                    # Solo aquí usamos s_mult_plot para mover las etiquetas visualmente
+                    rad_plot = math.radians(90 + (ang_guia * s_mult_plot)) 
+                    ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
+                            color='gray', linestyle='--', alpha=0.5)
+                    ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
+                            f"{ang_guia}°", ha='center', va='center', fontweight='bold')
 
+                # Dibujo de círculos y flecha
                 for i in range(3):
-                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.2))
-                
+                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.8, lw=1.2))
                 ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=0.5, headwidth=5))
                 
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
                 st.pyplot(fig, use_container_width=True)
 
-                st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
+                # RESULTADOS FINALES (El texto ahora indica el sentido para guía del usuario)
+                st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}° medidos en sentido **{sentido}**")
+            
             
             
 
