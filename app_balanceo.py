@@ -96,6 +96,10 @@ with tab1:
 
 # --- BOTÓN DE PROCESAMIENTO ---
 if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
+    # Definimos el multiplicador basado en el radio de la barra lateral (asegúrate de tener 'sentido' definido arriba)
+    # s_mult = 1 para Antihorario (matemático estándar), s_mult = -1 para Horario
+    s_mult = 1 if sentido == "Antihorario (CCW)" else -1
+    
     errores = []
     if not tecnico: errores.append("Nombre del Técnico")
     if v1 is None: errores.append("Vibración Inicial (V1)")
@@ -111,11 +115,13 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
             # --- CÁLCULOS ---
             centros = []
             for m in meds:
-                # Lógica: 0° Norte (Y+), sentido antihorario
-                rad = math.radians(m['a'])
-                centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
+                # Ajustamos la posición del centro según el sentido elegido (s_mult)
+                # 0° está en el Norte (90° rad)
+                rad = math.radians(90 - (m['a'] * s_mult))
+                # El centro del círculo de influencia se ubica opuesto a la masa de prueba
+                centros.append((v1 * math.cos(rad + math.pi), v1 * math.sin(rad + math.pi)))
 
-            # Intersecciones de círculos
+            # Intersecciones
             i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
             i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
             i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
@@ -134,7 +140,10 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 bx = sum(p[0] for p in mejor_tri) / 3
                 by = sum(p[1] for p in mejor_tri) / 3
                 mag_res = math.sqrt(bx**2 + by**2)
-                ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
+                
+                # Ángulo final ajustado al sentido de giro
+                ang_raw = math.degrees(math.atan2(bx, by))
+                ang_res = (ang_raw * s_mult + 360) % 360
                 
                 p_prueba_avg = sum(m['p'] for m in meds) / 3
                 peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
@@ -143,8 +152,6 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
                 lim_alto = (lim_bajo + sector) % 360
-                
-                # Descomposición vectorial (Ley de Senos)
                 rad_dif = math.radians(ang_res - lim_bajo)
                 rad_sec = math.radians(sector)
                 p_alto = peso_total * (math.sin(rad_dif) / math.sin(rad_sec))
@@ -155,24 +162,22 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
-                # Guías angulares cada 72°
+                # Guías angulares dinámicas según sentido
                 for ang_guia in range(0, 360, 72):
-                    rad_plot = math.radians(90 + ang_guia) 
+                    rad_plot = math.radians(90 - (ang_guia * s_mult)) 
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
                             color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
                     ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
                             f"{ang_guia}°", color='black', fontsize=9, ha='center', va='center', fontweight='bold')
 
-                # Círculos y Triángulo
                 for i in range(3):
-                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, ls='-', lw=1.2))
+                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.2))
                 
-                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3, edgecolor='darkred'))
+                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
                 
-                # FLECHA PEQUEÑA Y ESTILIZADA
+                # Flecha pequeña y estilizada
                 ax.annotate('', xy=(bx, by), xytext=(0, 0), 
-                            arrowprops=dict(facecolor='red', edgecolor='red', 
-                                            width=0.5, headwidth=5, headlength=6))
+                            arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5, headlength=6))
                 
                 ax.text(0.95, 0.95, f"Amplitud: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
                         color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
@@ -184,7 +189,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 st.pyplot(fig, use_container_width=True)
 
                 # RESULTADOS FINALES
-                instruccion = f"Colocar **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°"
+                instruccion = f"Colocar **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}° (Sentido {sentido})"
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
             
            
