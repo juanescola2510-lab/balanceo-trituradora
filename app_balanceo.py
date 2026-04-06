@@ -98,27 +98,34 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
         st.error("⚠️ Faltan datos obligatorios.")
     else:
         try:
-            # 1. SENTIDO DE GIRO (CCW: 72° a la izquierda | CW: 72° a la derecha)
+            # 1. DEFINICIÓN DE SENTIDO (CCW: 72° a la Izquierda | CW: 72° a la Derecha)
+            # Para 0° en el Norte (90° rad):
+            # Antihorario (CCW): Sumamos al ángulo base -> 90 + ang
+            # Horario (CW): Restamos al ángulo base -> 90 - ang
             s_mult = 1 if sentido == "Antihorario (CCW)" else -1
 
-            # 2. CÁLCULO DE CENTROS (Corregido para evitar error de listas)
+            # 2. CÁLCULO DE CENTROS (Ubicación física de las masas de prueba)
             centros_base = []
             for m in meds:
-                # 0° Norte. En CCW sumamos para ir a la izquierda.
+                # Calculamos el ángulo en radianes para el gráfico (Matplotlib)
                 rad = math.radians(90 + (m['a'] * s_mult))
-                # Centro opuesto a la masa de prueba
-                cx = -v1 * math.cos(rad)
-                cy = -v1 * math.sin(rad)
+                # Los centros de los círculos se ubican sobre el radio V1
+                cx = v1 * math.cos(rad)
+                cy = v1 * math.sin(rad)
                 centros_base.append((cx, cy))
 
-            # 3. INTERSECCIONES (Pasando valores individuales para evitar el error 'list' - 'list')
-            c1, c2, c3 = centros_base[0], centros_base[1], centros_base[2]
+            # 3. INTERSECCIONES (Pasando coordenadas individuales para evitar error de listas)
+            # Extraemos x, y de cada centro para la función geométrica
+            c1x, c1y = centros_base[0][0], centros_base[0][1]
+            c2x, c2y = centros_base[1][0], centros_base[1][1]
+            c3x, c3y = centros_base[2][0], centros_base[2][1]
             
-            i12 = obtener_interseccion(c1[0], c1[1], c2[0], c2[1], meds[0]['v'], meds[1]['v'])
-            i23 = obtener_interseccion(c2[0], c2[1], c3[0], c3[1], meds[1]['v'], meds[2]['v'])
-            i31 = obtener_interseccion(c3[0], c3[1], c1[0], c1[1], meds[2]['v'], meds[0]['v'])
+            i12 = obtener_interseccion(c1x, c1y, c2x, c2y, meds[0]['v'], meds[1]['v'])
+            i23 = obtener_interseccion(c2x, c2y, c3x, c3y, meds[1]['v'], meds[2]['v'])
+            i31 = obtener_interseccion(c3x, c3y, c1x, c1y, meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
+                # Hallar el mejor triángulo (el más pequeño)
                 mejor_tri = None
                 per_min = float('inf')
                 for p1 in i12:
@@ -129,29 +136,32 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                                 per_min = d
                                 mejor_tri = (p1, p2, p3)
 
-                # Baricentro
+                # Baricentro (Punto Pesado)
                 bx = sum(p[0] for p in mejor_tri) / 3
                 by = sum(p[1] for p in mejor_tri) / 3
                 mag_res = math.sqrt(bx**2 + by**2)
                 
-                # Ángulo final: 0° Norte, sentido según s_mult
+                # ÁNGULO RESULTANTE (Convertir de Math a Usuario)
+                # ang_math es el ángulo de Matplotlib (0° a la derecha)
                 ang_math = math.degrees(math.atan2(by, bx))
-                ang_res = ( (ang_math - 90) * s_mult ) % 360
+                # Convertimos a 0° Norte y sentido del usuario
+                ang_res = ((ang_math - 90) * s_mult) % 360
                 
                 peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
                 
-                # 4. REPARTICIÓN (72°)
+                # REPARTICIÓN (72°)
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
                 lim_alto = (lim_bajo + sector) % 360
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
 
-                # --- 5. GRÁFICO ---
+                # --- 4. GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
+                # Dibujo de Guías y Etiquetas
                 for ang_guia in range(0, 360, 72):
                     rad_plot = math.radians(90 + (ang_guia * s_mult)) 
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
@@ -159,20 +169,25 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                     ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
                             f"{ang_guia}°", ha='center', va='center', fontweight='bold')
 
+                # Círculos (Ahora sí alineados con las guías)
+                colores = ['#3B82F6', '#10B981', '#F59E0B']
                 for i in range(3):
                     ax.add_patch(plt.Circle(centros_base[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.5))
                 
                 ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
+                
+                # Flecha pequeña
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                            arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
                 
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
                 ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
                 st.pyplot(fig, use_container_width=True)
 
+                # RESULTADOS
                 st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
-            
-           
+          
             
          
             
