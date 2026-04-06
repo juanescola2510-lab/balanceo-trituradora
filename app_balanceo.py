@@ -67,16 +67,18 @@ def calcular_area(p1, p2, p3):
 with tab1:
     st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
     
-        # --- BARRA LATERAL ---
-    with st.sidebar:
-        st.header("👤 Datos del Servicio")
-        # Texto opaco para el nombre del técnico
-        tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
-        fecha_hoy = st.date_input("Fecha", date.today())
-        
-        st.divider()
-        st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
+        # --- 1. CONFIGURACIÓN EN LA BARRA LATERAL (SIDEBAR) ---
+with st.sidebar:
+    st.header("👤 Datos del Servicio")
+    tecnico = st.text_input("Técnico Responsable", value=None, placeholder="Ing. Juan Granja", key="tec_val")
+    fecha_hoy = st.date_input("Fecha", date.today())
     
+    st.divider()
+    # ESTA LÍNEA ES LA QUE FALTABA O ESTABA DESPUÉS:
+    sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
+    
+    st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
+
         st.header("📥 Mediciones")
         # Texto opaco para vibración mm/s
         v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", step=0.1, key="v1_val")
