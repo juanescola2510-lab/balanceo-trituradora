@@ -95,7 +95,7 @@ with tab1:
             meds.append({'v': v, 'p': p, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO ---
-if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_container_width=True):
+if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
     errores = []
     if not tecnico: errores.append("Nombre del Técnico")
     if v1 is None: errores.append("Vibración Inicial (V1)")
@@ -168,7 +168,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                 for i in range(3):
                     ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, ls='--', lw=1))
                 ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=1.5, headwidth=8))
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=0.9, headwidth=8))
                 
                 ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
                         color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
