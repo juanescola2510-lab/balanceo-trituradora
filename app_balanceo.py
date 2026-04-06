@@ -180,6 +180,22 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 ax.annotate('', xy=(bx, by), xytext=(0, 0), 
                             arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
                 
+                # --- ETIQUETA TÉCNICA ---
+                info_text = (
+                    f"Módulo: {round(mag_res, 2)} mm/s\n"
+                    f"Ángulo: {round(ang_res, 1)}°\n"
+                    f"Peso Total: {round(peso_total, 2)} g"
+                )
+
+                ax.text(0.95, 0.95, info_text, 
+                        transform=ax.transAxes, 
+                        fontsize=10, 
+                        fontweight='bold',
+                        color='red',
+                        va='top', 
+                        ha='right',
+                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
+
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
                 ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
