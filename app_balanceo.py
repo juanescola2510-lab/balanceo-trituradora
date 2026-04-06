@@ -187,11 +187,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 instruccion = f"Colocar **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°"
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
             
-            else:
-                st.warning("⚠️ No se encontró una intersección clara. Verifique las mediciones o use una masa de prueba mayor.")
-
-        except Exception as e:
-            st.error(f"❌ Error en el procesamiento: {e}")
+           
 
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
