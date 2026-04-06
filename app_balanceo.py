@@ -158,7 +158,7 @@ if st.button("⚖️ CALCULAR BALANCEO Y GENERAR PDF", type="primary", use_conta
                     
                     # Línea punteada opaca
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
-                            color='gray', linestyle='--', linewidth=0.8, alpha=0.3)
+                            color='gray', linestyle='--', linewidth=0.8, alpha=0.8)
                     
                     # Etiquetas (fuera de los ejes)
                     tx = lim_max * 1.2 * math.cos(rad_plot)
