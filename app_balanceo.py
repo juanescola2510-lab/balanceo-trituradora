@@ -67,21 +67,21 @@ def calcular_area(p1, p2, p3):
 with tab1:
     st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
     
-                # --- BARRA LATERAL ---
+               # --- BARRA LATERAL ---
 with st.sidebar:
     st.header("👤 Datos del Servicio")
     tecnico = st.text_input("Técnico Responsable", key="tec_val")
     fecha_hoy = st.date_input("Fecha", date.today())
     
     st.divider()
-    # Este selector ahora solo afectará la ESTÉTICA del gráfico y el texto
     sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
+    # s_mult solo para la visualización del gráfico (invierte eje X)
+    s_mult_plot = 1 if sentido == "Antihorario (CCW)" else -1
     
     st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
 
     st.header("📥 Mediciones")
     v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", key="v1_val")
-    
     p_prueba = st.number_input("Peso de prueba único (gramos)", value=None, placeholder="g", key="p_unico")
     
     meds = []
@@ -94,75 +94,82 @@ with st.sidebar:
 
 # --- BOTÓN DE PROCESAMIENTO ---
 if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
-    # s_mult solo para el dibujo del gráfico
-    s_mult_plot = 1 if sentido == "Antihorario (CCW)" else -1
-    
     if not tecnico or v1 is None or p_prueba is None or any(m['v'] is None for m in meds):
         st.error("⚠️ Faltan datos obligatorios.")
     else:
         try:
-            # --- CÁLCULOS ESTÁNDAR (Siempre Antihorario para no afectar pesos) ---
-            centros = []
+            # 1. CÁLCULO DE CENTROS (Siempre Antihorario para la matemática interna)
+            centros_base = []
             for m in meds:
                 rad = math.radians(m['a'])
-                # Lógica original: 0° Norte
-                centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
+                # 0° Norte, sentido Antihorario estándar
+                centros_base.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
-            # Intersecciones
-            i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
-            i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
-            i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
+            # 2. INTERSECCIONES Y BARICENTRO (Lógica original intacta)
+            i12 = obtener_interseccion(centros_base[0][0], centros_base[0][1], centros_base[1][0], centros_base[1][1], meds[0]['v'], meds[1]['v'])
+            i23 = obtener_interseccion(centros_base[1][0], centros_base[1][1], centros_base[2][0], centros_base[2][1], meds[1]['v'], meds[2]['v'])
+            i31 = obtener_interseccion(centros_base[2][0], centros_base[2][1], centros_base[0][0], centros_base[0][1], meds[2]['v'], meds[0]['v'])
 
             if i12 and i23 and i31:
-                # Hallar mejor triángulo y baricentro
-                mejor_tri = None
+                mejor_tri_base = None
                 per_min = float('inf')
                 for p1 in i12:
                     for p2 in i23:
                         for p3 in i31:
                             d = math.dist(p1,p2) + math.dist(p2,p3) + math.dist(p3,p1)
-                            if d < per_min: per_min = d; mejor_tri = (p1, p2, p3)
+                            if d < per_min: per_min = d; mejor_tri_base = (p1, p2, p3)
 
-                bx, by = sum(p[0] for p in mejor_tri)/3, sum(p[1] for p in mejor_tri)/3
-                mag_res = math.sqrt(bx**2 + by**2)
+                bx_base, by_base = sum(p[0] for p in mejor_tri_base)/3, sum(p[1] for p in mejor_tri_base)/3
+                mag_res = math.sqrt(bx_base**2 + by_base**2)
                 
-                # ÁNGULO RESULTANTE (Fórmula original que funcionaba bien)
-                ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
+                # Ángulo y Pesos (Fórmula original 100% conservada)
+                ang_res = (math.degrees(math.atan2(-bx_base, by_base)) + 360) % 360
                 peso_total = (v1 / mag_res) * p_prueba if mag_res != 0 else 0
                 
-                # REPARTICIÓN ORIGINAL (Intacta)
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
                 lim_alto = lim_bajo + sector
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
 
-                # --- GRÁFICO (Ajuste visual de sentido sin cambiar coordenadas reales) ---
+                # --- 3. GRÁFICO (Ajuste visual de sentido) ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
+                # Función para "espejar" coordenadas X si es Horario
+                transform_x = lambda x: x * s_mult_plot
+
+                # Dibujo de Guías Angulares
                 for ang_guia in range(0, 360, 72):
-                    # Solo aquí usamos s_mult_plot para mover las etiquetas visualmente
-                    rad_plot = math.radians(90 + (ang_guia * s_mult_plot)) 
+                    rad_plot = math.radians(90 - (ang_guia * s_mult_plot)) 
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
-                            color='gray', linestyle='--', alpha=0.5)
+                            color='gray', linestyle='--', alpha=0.4)
                     ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
                             f"{ang_guia}°", ha='center', va='center', fontweight='bold')
 
-                # Dibujo de círculos y flecha
+                # Dibujo de Círculos "espejados"
                 for i in range(3):
-                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.8, lw=1.2))
-                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', width=0.5, headwidth=5))
+                    c_x = transform_x(centros_base[i][0])
+                    c_y = centros_base[i][1]
+                    ax.add_patch(plt.Circle((c_x, c_y), meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, lw=1.2))
+                
+                # Triángulo y Flecha "espejados"
+                tri_plot = [(transform_x(p[0]), p[1]) for p in mejor_tri_base]
+                ax.add_patch(plt.Polygon(tri_plot, color='red', alpha=0.3))
+                ax.annotate('', xy=(transform_x(bx_base), by_base), xytext=(0, 0), 
+                            arrowprops=dict(facecolor='red', edgecolor='red', width=0.5, headwidth=5))
                 
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
+                ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
+                
                 st.pyplot(fig, use_container_width=True)
 
-                # RESULTADOS FINALES (El texto ahora indica el sentido para guía del usuario)
+                # RESULTADOS (Consistentes con la matemática original)
                 st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}° medidos en sentido **{sentido}**")
             
-            
+        
+
             
 
                 # --- FUNCIÓN PDF ---
