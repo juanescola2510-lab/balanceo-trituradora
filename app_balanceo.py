@@ -31,11 +31,4 @@ resultado = calcular_balanceo_1_plano(5.0, 30, 10, 0, 8.0, 120)
 
 print(f"Masa de corrección: {resultado['mc_masa']:.2f} unidades")
 print(f"Ángulo de colocación: {resultado['mc_fase_deg']:.2f}°")
-Usa el código con precaución.
 
-Resultados del Ejemplo
-Basado en la ejecución del código:
-Masa de corrección: 
- unidades (g, oz, etc.).
-Ángulo: 
- desde la referencia establecida.
