@@ -65,32 +65,32 @@ def calcular_area(p1, p2, p3):
 
 # --- PESTAÑA 1: CALCULADOR ---
 with tab1:
-    st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
+        
+                   # --- BARRA LATERAL ---
+    with st.sidebar:
+        st.header("👤 Datos del Servicio")
+        tecnico = st.text_input("Técnico Responsable", key="tec_val")
+        fecha_hoy = st.date_input("Fecha", date.today())
+        
+        st.divider()
+        sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
+        # s_mult solo para la visualización del gráfico (invierte eje X)
+        s_mult_plot = 1 if sentido == "Antihorario (CCW)" else -1
+        
+        st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
     
-               # --- BARRA LATERAL ---
-with st.sidebar:
-    st.header("👤 Datos del Servicio")
-    tecnico = st.text_input("Técnico Responsable", key="tec_val")
-    fecha_hoy = st.date_input("Fecha", date.today())
-    
-    st.divider()
-    sentido = st.radio("Sentido de los Ángulos:", ["Antihorario (CCW)", "Horario (CW)"])
-    # s_mult solo para la visualización del gráfico (invierte eje X)
-    s_mult_plot = 1 if sentido == "Antihorario (CCW)" else -1
-    
-    st.button("🧹 LIMPIAR PANTALLA", on_click=limpiar_pantalla, use_container_width=True)
-
-    st.header("📥 Mediciones")
-    v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", key="v1_val")
-    p_prueba = st.number_input("Peso de prueba único (gramos)", value=None, placeholder="g", key="p_unico")
-    
-    meds = []
-    for i in range(2, 5):
-        st.subheader(f"Medición {i}")
-        v = st.number_input(f"Vibración V{i}", value=None, key=f"v{i}_val")
-        a_def = float((i-2)*120.0)
-        a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
-        meds.append({'v': v, 'p': p_prueba, 'a': a})
+        st.header("📥 Mediciones")
+        v1 = st.number_input("Vibración Inicial (V1)", value=None, placeholder="mm/s", key="v1_val")
+        p_prueba = st.number_input("Peso de prueba único (gramos)", value=None, placeholder="g", key="p_unico")
+        
+        meds = []
+        for i in range(2, 5):
+            st.subheader(f"Medición {i}")
+            v = st.number_input(f"Vibración V{i}", value=None, key=f"v{i}_val")
+            a_def = float((i-2)*120.0)
+            a = st.number_input(f"Ángulo V{i} (°)", value=a_def, key=f"a{i}_val")
+            meds.append({'v': v, 'p': p_prueba, 'a': a})
 
 # --- BOTÓN DE PROCESAMIENTO ---
     if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=True):
