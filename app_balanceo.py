@@ -108,12 +108,14 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
         for e in errores: st.write(f"* {e}")
     else:
         try:
-            # --- CÁLCULOS (SIN MODIFICAR LÓGICA) ---
+            # --- CÁLCULOS ---
             centros = []
             for m in meds:
+                # Lógica: 0° Norte (Y+), sentido antihorario
                 rad = math.radians(m['a'])
                 centros.append((-v1 * math.sin(rad), v1 * math.cos(rad)))
 
+            # Intersecciones de círculos
             i12 = obtener_interseccion(centros[0][0], centros[0][1], centros[1][0], centros[1][1], meds[0]['v'], meds[1]['v'])
             i23 = obtener_interseccion(centros[1][0], centros[1][1], centros[2][0], centros[2][1], meds[1]['v'], meds[2]['v'])
             i31 = obtener_interseccion(centros[2][0], centros[2][1], centros[0][0], centros[0][1], meds[2]['v'], meds[0]['v'])
@@ -124,63 +126,72 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 for p1 in i12:
                     for p2 in i23:
                         for p3 in i31:
-                            d12 = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
-                            d23 = math.sqrt((p2[0]-p3[0])**2 + (p2[1]-p3[1])**2)
-                            d31 = math.sqrt((p3[0]-p1[0])**2 + (p3[1]-p1[1])**2)
-                            perimetro = d12 + d23 + d31
-                            if perimetro < perimetro_minimo:
-                                perimetro_minimo = perimetro
+                            d = math.dist(p1, p2) + math.dist(p2, p3) + math.dist(p3, p1)
+                            if d < perimetro_minimo:
+                                perimetro_minimo = d
                                 mejor_tri = (p1, p2, p3)
 
                 bx = sum(p[0] for p in mejor_tri) / 3
                 by = sum(p[1] for p in mejor_tri) / 3
                 mag_res = math.sqrt(bx**2 + by**2)
                 ang_res = (math.degrees(math.atan2(-bx, by)) + 360) % 360
+                
                 p_prueba_avg = sum(m['p'] for m in meds) / 3
                 peso_total = (v1 / mag_res) * p_prueba_avg if mag_res != 0 else 0
                 
+                # Repartición en sectores de 72°
                 sector = 72
                 lim_bajo = math.floor(ang_res / sector) * sector
-                lim_alto = lim_bajo + sector
-                p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
-                p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
+                lim_alto = (lim_bajo + sector) % 360
+                
+                # Descomposición vectorial (Ley de Senos)
+                rad_dif = math.radians(ang_res - lim_bajo)
+                rad_sec = math.radians(sector)
+                p_alto = peso_total * (math.sin(rad_dif) / math.sin(rad_sec))
+                p_bajo = peso_total * (math.sin(rad_sec - rad_dif) / math.sin(rad_sec))
 
-                # --- GRÁFICO (0° EN EJE Y+, SENTIDO ANTIHORARIO) ---
+                # --- GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
-                
                 lim_max = max([m['v'] + v1 for m in meds]) * 1.3
                 
-                # Líneas cada 72° (0° arriba, avanza antihorario)
+                # Guías angulares cada 72°
                 for ang_guia in range(0, 360, 72):
-                    # Para antihorario con 0 en Y+: rad = 90 + ang_guia
                     rad_plot = math.radians(90 + ang_guia) 
-                    
-                    # Línea punteada opaca
                     ax.plot([0, lim_max * 1.1 * math.cos(rad_plot)], [0, lim_max * 1.1 * math.sin(rad_plot)], 
-                            color='gray', linestyle='--', linewidth=0.8, alpha=0.8)
-                    
-                    # Etiquetas (fuera de los ejes)
-                    tx = lim_max * 1.2 * math.cos(rad_plot)
-                    ty = lim_max * 1.2 * math.sin(rad_plot)
-                    ax.text(tx, ty, f"{ang_guia}°", color='gray', fontsize=9, ha='center', va='center')
+                            color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
+                    ax.text(lim_max * 1.2 * math.cos(rad_plot), lim_max * 1.2 * math.sin(rad_plot), 
+                            f"{ang_guia}°", color='black', fontsize=9, ha='center', va='center', fontweight='bold')
 
+                # Círculos y Triángulo
                 for i in range(3):
-                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, ls='--', lw=1))
-                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3))
-                ax.annotate('', xy=(bx, by), xytext=(0, 0), arrowprops=dict(facecolor='red', edgecolor='red', width=0.9, headwidth=8))
+                    ax.add_patch(plt.Circle(centros[i], meds[i]['v'], fill=False, color='#3B82F6', alpha=0.9, ls='-', lw=1.2))
                 
-                ax.text(0.95, 0.95, f"Módulo: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
+                ax.add_patch(plt.Polygon(mejor_tri, color='red', alpha=0.3, edgecolor='darkred'))
+                
+                # FLECHA PEQUEÑA Y ESTILIZADA
+                ax.annotate('', xy=(bx, by), xytext=(0, 0), 
+                            arrowprops=dict(facecolor='red', edgecolor='red', 
+                                            width=0.5, headwidth=5, headlength=6))
+                
+                ax.text(0.95, 0.95, f"Amplitud: {round(mag_res, 2)} mm/s\nÁngulo: {round(ang_res, 1)}°", 
                         color='red', fontweight='bold', transform=ax.transAxes, ha='right', va='top', 
                         bbox=dict(facecolor='white', alpha=0.9, edgecolor='red'))
 
                 ax.set_xlim(-lim_max*1.4, lim_max*1.4); ax.set_ylim(-lim_max*1.4, lim_max*1.4)
-                ax.axhline(0, color='black', lw=1.2); ax.axvline(0, color='black', lw=1.2)
+                ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
                 st.pyplot(fig, use_container_width=True)
 
-                instruccion = f"PESO MAYOR: {round(max(p_bajo, p_alto), 2)}g en {lim_bajo if p_bajo > p_alto else lim_alto}° / PESO MENOR: {round(min(p_bajo, p_alto), 2)}g en {lim_alto if p_bajo > p_alto else lim_bajo}°"
+                # RESULTADOS FINALES
+                instruccion = f"Colocar **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°"
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** {instruccion}")
+            
+            else:
+                st.warning("⚠️ No se encontró una intersección clara. Verifique las mediciones o use una masa de prueba mayor.")
+
+        except Exception as e:
+            st.error(f"❌ Error en el procesamiento: {e}")
 
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
