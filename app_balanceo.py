@@ -139,29 +139,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 lim_alto = (lim_bajo + sector) % 360
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
-# ... después de todos tus cálculos de p_bajo, p_alto, etc.
 
-# Asegúrate de que esta línea NO tenga espacios extra al inicio
-if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
-    try:
-        nuevo_registro = pd.DataFrame([{
-            "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
-            "Tecnico": tecnico,
-            "Equipo": "405CR01",
-            "Vib_Inicial": v1,
-            "Vib_Final": v_final if v_final else 0,
-            "Peso_Total": round(peso_total, 2),
-            "Paso_Bajo": round(p_bajo, 2),
-            "Paso_Alto": round(p_alto, 2),
-            "Angulo_Res": round(ang_res, 1)
-        }])
-
-        data_actual = conn.read()
-        actualizada = pd.concat([data_actual, nuevo_registro], ignore_index=True)
-        conn.update(data=actualizada)
-        st.success("✅ ¡Datos guardados!")
-    except Exception as e:
-        st.error(f"Error al guardar: {e}")
                 # --- 4. GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
@@ -202,7 +180,29 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
                 st.pyplot(fig, use_container_width=True)
 
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
+# ... después de todos tus cálculos de p_bajo, p_alto, etc.
 
+# Asegúrate de que esta línea NO tenga espacios extra al inicio
+if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
+    try:
+        nuevo_registro = pd.DataFrame([{
+            "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
+            "Tecnico": tecnico,
+            "Equipo": "405CR01",
+            "Vib_Inicial": v1,
+            "Vib_Final": v_final if v_final else 0,
+            "Peso_Total": round(peso_total, 2),
+            "Paso_Bajo": round(p_bajo, 2),
+            "Paso_Alto": round(p_alto, 2),
+            "Angulo_Res": round(ang_res, 1)
+        }])
+
+        data_actual = conn.read()
+        actualizada = pd.concat([data_actual, nuevo_registro], ignore_index=True)
+        conn.update(data=actualizada)
+        st.success("✅ ¡Datos guardados!")
+    except Exception as e:
+        st.error(f"Error al guardar: {e}")
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
                     pdf = FPDF()
