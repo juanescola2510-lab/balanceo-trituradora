@@ -178,9 +178,9 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
                 st.pyplot(fig, use_container_width=True)
-                st.success(f"✅ **ACCIÓN:** {round(p_bajo,2)}g en {lim_bajo}° y {round(p_alto,2)}g en {lim_alto}°")
-                    
-                    # --- REVISA QUE ESTO ESTÉ EXACTAMENTE ASÍ ---
+                st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
+                
+                # --- GUARDAR EN MEMORIA PARA LA NUBE ---
                 st.session_state['data_log'] = {
                     "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
                     "Tecnico": tecnico,
@@ -191,26 +191,26 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                     "Paso_Bajo": round(p_bajo, 2),
                     "Paso_Alto": round(p_alto, 2),
                     "Angulo_Res": round(ang_res, 1)
-                 } # <-- ESTA LLAVE ES LA QUE DEBE ESTAR CERRADA
+                } # <--- ESTA LLAVE ES VITAL
 
-            except Exception as e:
-                st.error(f"Error en los cálculos: {e}")
-                
-    # --- BOTÓN PARA GUARDAR EN GOOGLE SHEETS ---
-    st.divider()
-    if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
-        if 'data_log' in st.session_state:
-            try:
-                nuevo = pd.DataFrame([st.session_state['data_log']])
-                actual = conn.read()
-                df_final = pd.concat([actual, nuevo], ignore_index=True)
-                conn.update(data=df_final)
-                st.balloons()
-                st.success("✅ ¡Datos guardados en la nube!")
-            except Exception as e:
-                st.error(f"Error de conexión: {e}")
-        else:
-            st.warning("⚠️ Primero calcula el balanceo.")
+        except Exception as e:
+            st.error(f"Error en los cálculos: {e}")
+
+# --- BOTÓN DE GUARDADO (PEGADO AL BORDE IZQUIERDO) ---
+st.divider()
+if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
+    if 'data_log' in st.session_state:
+        try:
+            nuevo = pd.DataFrame([st.session_state['data_log']])
+            actual = conn.read()
+            df_final = pd.concat([actual, nuevo], ignore_index=True)
+            conn.update(data=df_final)
+            st.balloons()
+            st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
+        except Exception as e:
+            st.error(f"Error de conexión con la nube: {e}")
+    else:
+        st.warning("⚠️ Primero realiza el cálculo arriba para generar datos.")
         
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
