@@ -182,8 +182,8 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
 # ... después de todos tus cálculos de p_bajo, p_alto, etc.
 
-     except Exception as e:
-            st.error(f"Error en los cálculos: {e}")
+         except Exception as e:
+                st.error(f"Error en los cálculos: {e}")
 
 # Asegúrate de que esta línea NO tenga espacios extra al inicio
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
