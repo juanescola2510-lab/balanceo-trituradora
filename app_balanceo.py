@@ -262,7 +262,7 @@ with tab2:
     st.subheader("⚠️ Protocolo de Seguridad Obligatorio")
     st.error("""
     **ANTES DE INICIAR CUALQUIER TAREA:**
-    1.  **Comunicación Eléctrica:** Informar a la **Planta Eléctrica** que se iniciarán los trabajos de balanceo.
+    1.  **Comunicación Eléctrica:** Pedir autorización a la **Planta Eléctrica** que se iniciarán los trabajos de balanceo.
     2.  **Gestión de Sensores:** Comunicarse con **Panel de Control** para solicitar que se **congelen los sensores de vibración** del equipo para evitar disparos falsos.
     3.  **Bloqueo y Etiquetado (LOTO):** Al momento de colocar o retirar los pesos de prueba, el equipo debe estar **totalmente apagado, desenergizado y bloqueado**. ¡Nunca manipule el rotor en movimiento!
     """)
@@ -271,7 +271,7 @@ with tab2:
 
     st.markdown("""
     ### 1. Medición Inicial (V1)
-    *   Arranque la trituradora y mida el nivel de vibración global.
+    *   Arranque la trituradora y mida el nivel de vibración inicial.
     *   Anote este valor como **Vibración Inicial (V1)** en la barra lateral.
     
     ### 2. Colocación de Pesos de Prueba
