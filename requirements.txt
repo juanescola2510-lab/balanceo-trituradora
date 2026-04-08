@@ -6,3 +6,4 @@ fpdf
 pytz
 plotly
 pandas
+openpyxl
