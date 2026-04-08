@@ -254,31 +254,26 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
             st.error(f"Error en cálculos: {ex}")
 
 # --- BOTÓN DE GUARDADO ---
-st.divider()
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
     if 'data_log' in st.session_state:
         try:
-            # 1. Establecer conexión (usa automáticamente los Secrets)
+            # Forzamos la URL directamente aquí
+            url_hoja = "https://docs.google.com/spreadsheets/d/1gw7WoH9cZwzP_DX5f0IUZE-pule1M5FLIEfdwd8QWNk/edit?gid=0#gid=0"
+            
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # 2. Preparar datos nuevos
             nuevo = pd.DataFrame([st.session_state['data_log']])
             
-            # 3. Leer historial actual
-            actual = conn.read()
-            
-            # 4. Concatenar y subir
+            # Le pasamos la URL explícitamente al leer y al actualizar
+            actual = conn.read(spreadsheet=url_hoja)
             df_final = pd.concat([actual, nuevo], ignore_index=True)
-            conn.update(data=df_final)
+            
+            conn.update(spreadsheet=url_hoja, data=df_final)
             
             st.balloons()
             st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
-            
         except Exception as e:
-            # Esto nos dirá si el error es de la llave, de la URL o de permisos
-            st.error(f"❌ Error detallado: {e}")
-    else:
-        st.warning("⚠️ Primero realiza el cálculo arriba para generar datos.")
+            st.error(f"Error detallado: {e}")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
