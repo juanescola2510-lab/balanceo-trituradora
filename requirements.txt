@@ -7,3 +7,4 @@ pytz
 plotly
 pandas
 openpyxl
+st-gsheets-connection
