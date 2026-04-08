@@ -249,9 +249,7 @@ if v1 is not None and v_final is not None:
         elif v_final <= 7.1: st.warning("⚠️ **ESTADO: SATISFACTORIO**")
         else: st.error("🚨 **ESTADO: ALERTA**")
 
-# --- SEGURIDAD ---
-st.sidebar.divider()
-seguridad = st.sidebar.checkbox("🔒 Protocolo LOTO ejecutado")
+
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
