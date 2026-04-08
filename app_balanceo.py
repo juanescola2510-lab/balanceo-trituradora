@@ -182,12 +182,13 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
 # ... después de todos tus cálculos de p_bajo, p_alto, etc.
 
-         except Exception as e:
-                st.error(f"Error en los cálculos: {e}")
+            except Exception as e:
+            st.error(f"Error en los cálculos: {e}")
 
-# Asegúrate de que esta línea NO tenga espacios extra al inicio
+# --- BOTÓN DE GUARDADO (Asegúrate de que 'if' esté pegado al borde izquierdo) ---
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
     try:
+        # Preparamos los datos
         nuevo_registro = pd.DataFrame([{
             "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
             "Tecnico": tecnico,
@@ -200,12 +201,16 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
             "Angulo_Res": round(ang_res, 1)
         }])
 
+        # Leemos, concatenamos y subimos
         data_actual = conn.read()
         actualizada = pd.concat([data_actual, nuevo_registro], ignore_index=True)
         conn.update(data=actualizada)
-        st.success("✅ ¡Datos guardados!")
+        
+        st.balloons()
+        st.success("✅ ¡Datos sincronizados en la nube exitosamente!")
+        
     except Exception as e:
-        st.error(f"Error al guardar: {e}")
+        st.error(f"Error de conexión con la base de datos: {e}")
                 # --- FUNCIÓN PDF ---
                 def export_pdf():
                     pdf = FPDF()
