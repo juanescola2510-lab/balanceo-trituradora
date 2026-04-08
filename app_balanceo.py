@@ -253,19 +253,30 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
         except Exception as ex:
             st.error(f"Error en cálculos: {ex}")
 
-# --- BOTÓN DE GUARDADO (FUERA DE LOS CÁLCULOS, PEGADO AL MARGEN IZQUIERDO) ---
+# --- BOTÓN DE GUARDADO ---
 st.divider()
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
     if 'data_log' in st.session_state:
         try:
+            # 1. Establecer conexión (usa automáticamente los Secrets)
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            
+            # 2. Preparar datos nuevos
             nuevo = pd.DataFrame([st.session_state['data_log']])
+            
+            # 3. Leer historial actual
             actual = conn.read()
+            
+            # 4. Concatenar y subir
             df_final = pd.concat([actual, nuevo], ignore_index=True)
-            conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], data=df_final)
+            conn.update(data=df_final)
+            
             st.balloons()
             st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
+            
         except Exception as e:
-            st.error(f"Error de conexión con la nube: {e}")
+            # Esto nos dirá si el error es de la llave, de la URL o de permisos
+            st.error(f"❌ Error detallado: {e}")
     else:
         st.warning("⚠️ Primero realiza el cálculo arriba para generar datos.")
 
