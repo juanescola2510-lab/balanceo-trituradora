@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+from datetime import datetime  # <--- ESTA ES LA LÍNEA QUE FALTABA
 
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Optimizador de Gastos", layout="centered")
