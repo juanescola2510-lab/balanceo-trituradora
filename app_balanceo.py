@@ -261,7 +261,7 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
             nuevo = pd.DataFrame([st.session_state['data_log']])
             actual = conn.read()
             df_final = pd.concat([actual, nuevo], ignore_index=True)
-            conn.update(data=df_final)
+            conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], data=df_final)
             st.balloons()
             st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
         except Exception as e:
