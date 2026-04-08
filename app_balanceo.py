@@ -256,10 +256,35 @@ seguridad = st.sidebar.checkbox("🔒 Protocolo LOTO ejecutado")
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
-    st.error("⚠️ Cumplir con Bloqueo LOTO y comunicación con Planta Eléctrica antes de intervenir.")
+    
+    st.subheader("⚠️ Protocolo de Seguridad Obligatorio")
+    st.error("""
+    **ANTES DE INICIAR CUALQUIER TAREA:**
+    1.  **Comunicación Eléctrica:** Pedir autorización a la **Planta Eléctrica** que se iniciarán los trabajos de balanceo.
+    2.  **Gestión de Sensores:** Comunicarse con **Panel de Control** para solicitar que se **congelen los sensores de vibración** del equipo para evitar disparos falsos.
+    3.  **Bloqueo y Etiquetado (LOTO):** Al momento de colocar o retirar los pesos de prueba, el equipo debe estar **totalmente apagado, desenergizado y bloqueado**. ¡Nunca manipule el rotor en movimiento!
+    """)
+
+    st.divider()
+
     st.markdown("""
-    1. **V1:** Medición base.
-    2. **Pruebas:** Pesos en 0°, 120°, 240°.
-    3. **Corrección:** El sistema distribuye el peso en los eyectores a 72°.
-    4. **Cierre:** Ingrese la vibración final en la barra lateral para completar el reporte.
+    ### 1. Medición Inicial (V1)
+    *   Arranque la trituradora y mida el nivel de vibración inicial.
+    *   Anote este valor como **Vibración Inicial (V1)** en la barra lateral.
+    
+    ### 2. Colocación de Pesos de Prueba
+    Se deben realizar 3 mediciones adicionales colocando un peso conocido en ángulos específicos:
+    *   **Medición V2:** Coloque el peso de prueba en **0°**.
+    *   **Medición V3:** Coloque el peso de prueba en **72°/144°/216°/288°**.
+    *   **Medición V4:** Coloque el peso de prueba en **72°/144°/216°/288°**.
+    *   *Nota: Asegúrese de retirar el peso anterior antes de colocar el siguiente.*
+    
+    ### 3. Ingreso de Datos
+    *   Ingrese los valores de vibración y pesos obtenidos en la pestaña **Calculador**.
+    *   El software generará un gráfico de intersección cuyo centro representa el vector de desbalance.
+    
+    ### 4. Ejecución de la Corrección
+    *   El sistema calculará el **Peso Total** necesario y su ubicación exacta.
+    *   Dado que la trituradora usa **eyectores a 72°**, el software distribuirá el peso entre los dos eyectores más cercanos.
+    *   Suelde o fije los pesos según la **Acción Recomendada**.
     """)
