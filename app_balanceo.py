@@ -178,6 +178,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 ax.axhline(0, color='black', lw=1, alpha=0.3); ax.axvline(0, color='black', lw=1, alpha=0.3)
                 
                 st.pyplot(fig, use_container_width=True)
+                # --- AQUÍ TERMINA TU CÁLCULO DE P_BAJO Y P_ALTO ---
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
                 
                 # --- GUARDAR EN MEMORIA PARA LA NUBE ---
@@ -191,28 +192,9 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                     "Paso_Bajo": round(p_bajo, 2),
                     "Paso_Alto": round(p_alto, 2),
                     "Angulo_Res": round(ang_res, 1)
-                } # <--- ESTA LLAVE ES VITAL
+                }
 
-        except Exception as e:
-            st.error(f"Error en los cálculos: {e}")
-
-# --- BOTÓN DE GUARDADO (PEGADO AL BORDE IZQUIERDO) ---
-st.divider()
-if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
-    if 'data_log' in st.session_state:
-        try:
-            nuevo = pd.DataFrame([st.session_state['data_log']])
-            actual = conn.read()
-            df_final = pd.concat([actual, nuevo], ignore_index=True)
-            conn.update(data=df_final)
-            st.balloons()
-            st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
-        except Exception as e:
-            st.error(f"Error de conexión con la nube: {e}")
-    else:
-        st.warning("⚠️ Primero realiza el cálculo arriba para generar datos.")
-        
-                # --- FUNCIÓN PDF ---
+                # --- FUNCIÓN PDF (DENTRO DEL BLOQUE DE CÁLCULO) ---
                 def export_pdf():
                     pdf = FPDF()
                     pdf.add_page()
@@ -248,7 +230,6 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
                     pdf.cell(47, 8, "Peso Total (g)", border=1, align='C'); pdf.cell(47, 8, "Ángulo Corr.", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_bajo} (g)", border=1, align='C'); pdf.cell(48, 8, f"Peso {lim_alto} (g)", border=1, align='C', ln=1)
                     pdf.cell(47, 10, f"{round(peso_total, 2)}", border=1, align='C'); pdf.cell(47, 10, f"{round(ang_res, 1)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_bajo, 2)}", border=1, align='C'); pdf.cell(48, 10, f"{round(p_alto, 2)}", border=1, align='C', ln=1)
 
-                    # --- NUEVA SECCIÓN: VERIFICACIÓN POST-CORRECCIÓN EN EL PDF ---
                     if v_final is not None:
                         pdf.ln(8)
                         pdf.set_fill_color(0, 100, 0); pdf.set_text_color(255); pdf.set_font("Arial", "B", 11)
@@ -268,7 +249,23 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
             else:
                 st.error("❌ Los círculos no se cortan.")
         except Exception as ex:
-            st.error(f"Error: {ex}")
+            st.error(f"Error en cálculos: {ex}")
+
+# --- BOTÓN DE GUARDADO (FUERA DE LOS CÁLCULOS, PEGADO AL MARGEN IZQUIERDO) ---
+st.divider()
+if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
+    if 'data_log' in st.session_state:
+        try:
+            nuevo = pd.DataFrame([st.session_state['data_log']])
+            actual = conn.read()
+            df_final = pd.concat([actual, nuevo], ignore_index=True)
+            conn.update(data=df_final)
+            st.balloons()
+            st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
+        except Exception as e:
+            st.error(f"Error de conexión con la nube: {e}")
+    else:
+        st.warning("⚠️ Primero realiza el cálculo arriba para generar datos.")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
