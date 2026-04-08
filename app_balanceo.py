@@ -65,7 +65,7 @@ def calcular_area(p1, p2, p3):
 
 # --- PESTAÑA 1: CALCULADOR ---
 with tab1:
-    st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | Sentido: Antihorario</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-weight: bold;'>Sistema: 0° Norte (Y+) | </p>", unsafe_allow_html=True)
     
                # --- BARRA LATERAL ---
 with st.sidebar:
