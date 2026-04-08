@@ -8,10 +8,13 @@ from PIL import Image
 from fpdf import FPDF
 from datetime import date, datetime
 import pytz
+# --- AÑADIR ESTO AL INICIO CON TUS IMPORTS ---
+from streamlit_gsheets import GSheetsConnection
 
 
 # Configuración de la interfaz
 st.set_page_config(page_title="Balanceo Trituradora 405CR01", layout="centered")
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- 1. LOGO Y TÍTULOS ---
 col_logo1, col_logo2, col_logo3 = st.columns([2, 1, 2])
@@ -136,7 +139,32 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 lim_alto = (lim_bajo + sector) % 360
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
+if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
+    try:
+        # 1. Crear el nuevo registro
+        nuevo_registro = pd.DataFrame([{
+            "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
+            "Tecnico": tecnico,
+            "Equipo": "405CR01",
+            "Vib_Inicial": v1,
+            "Vib_Final": v_final if v_final else 0,
+            "Peso_Total": round(peso_total, 2),
+            "Paso_Bajo": round(p_bajo, 2),
+            "Paso_Alto": round(p_alto, 2),
+            "Angulo_Res": round(ang_res, 1)
+        }])
 
+        # 2. Leer datos actuales y concatenar
+        # Nota: La URL se configurará en los "Secrets" de Streamlit Cloud
+        data_actual = conn.read()
+        actualizada = pd.concat([data_actual, nuevo_registro], ignore_index=True)
+        
+        # 3. Subir a la nube
+        conn.update(data=actualizada)
+        st.balloons()
+        st.success("✅ ¡Datos sincronizados en la nube exitosamente!")
+    except Exception as e:
+        st.error(f"Error al conectar con la base de datos: {e}")
                 # --- 4. GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
