@@ -202,7 +202,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 st.pyplot(fig, use_container_width=True)
 
                 # RESULTADOS
-                st.success(f"✅ **ACCIÓN:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
+                st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
           
             
          
