@@ -139,9 +139,11 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 lim_alto = (lim_bajo + sector) % 360
                 p_alto = peso_total * (math.sin(math.radians(ang_res - lim_bajo)) / math.sin(math.radians(sector)))
                 p_bajo = peso_total * (math.sin(math.radians(lim_alto - ang_res)) / math.sin(math.radians(sector)))
+# ... después de todos tus cálculos de p_bajo, p_alto, etc.
+
+# Asegúrate de que esta línea NO tenga espacios extra al inicio
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
     try:
-        # 1. Crear el nuevo registro
         nuevo_registro = pd.DataFrame([{
             "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
             "Tecnico": tecnico,
@@ -154,17 +156,12 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL"):
             "Angulo_Res": round(ang_res, 1)
         }])
 
-        # 2. Leer datos actuales y concatenar
-        # Nota: La URL se configurará en los "Secrets" de Streamlit Cloud
         data_actual = conn.read()
         actualizada = pd.concat([data_actual, nuevo_registro], ignore_index=True)
-        
-        # 3. Subir a la nube
         conn.update(data=actualizada)
-        st.balloons()
-        st.success("✅ ¡Datos sincronizados en la nube exitosamente!")
+        st.success("✅ ¡Datos guardados!")
     except Exception as e:
-        st.error(f"Error al conectar con la base de datos: {e}")
+        st.error(f"Error al guardar: {e}")
                 # --- 4. GRÁFICO ---
                 fig, ax = plt.subplots(figsize=(8,8), dpi=200)
                 ax.set_aspect('equal')
