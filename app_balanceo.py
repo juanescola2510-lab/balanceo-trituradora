@@ -10,6 +10,8 @@ from datetime import date, datetime
 import pytz
 # --- AÑADIR ESTO AL INICIO CON TUS IMPORTS ---
 from streamlit_gsheets import GSheetsConnection
+import pandas as pd
+
 
 
 # Configuración de la interfaz
