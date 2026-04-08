@@ -1,90 +1,96 @@
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
-from datetime import datetime  # <--- ESTA ES LA LÍNEA QUE FALTABA
+from datetime import datetime
 
 # --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Optimizador de Gastos", layout="centered")
+st.set_page_config(page_title="Historial de Gastos", layout="centered")
 
-st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💰 Asistente de Optimización Financiera</h1>", unsafe_allow_html=True)
+# Inicializar el historial en la memoria de la sesión si no existe
+if 'historial_datos' not in st.session_state:
+    st.session_state['historial_datos'] = pd.DataFrame(columns=[
+        'Fecha Registro', 'Ingresos', 'Vivienda', 'Alimentación', 
+        'Transporte', 'Servicios', 'Ocio', 'Otros', 'Saldo Mensual'
+    ])
 
-# --- 1. ENTRADA DE DATOS (INGRESOS) ---
-st.subheader("📥 Tus Ingresos")
-ingreso_total = st.number_input("Ingreso Mensual Total ($)", min_value=0.0, step=100.0, value=0.0)
+st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>💰 Control Financiero Histórico</h1>", unsafe_allow_html=True)
 
-# --- 2. REGISTRO DE EGRESOS ---
-st.subheader("💸 Tus Gastos Mensuales")
+# --- 1. ENTRADA DE DATOS ---
+with st.expander("➕ Registrar Nuevos Datos del Mes", expanded=True):
+    fecha_reg = st.date_input("Mes de referencia", datetime.now())
+    ingreso = st.number_input("Ingreso Total ($)", min_value=0.0, step=100.0)
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        vivienda = st.number_input("Vivienda", min_value=0.0)
+        alimentacion = st.number_input("Alimentación", min_value=0.0)
+        transporte = st.number_input("Transporte", min_value=0.0)
+    with c2:
+        servicios = st.number_input("Servicios", min_value=0.0)
+        ocio = st.number_input("Ocio", min_value=0.0)
+        otros = st.number_input("Otros", min_value=0.0)
 
-col1, col2 = st.columns(2)
-with col1:
-    vivienda = st.number_input("Vivienda (Renta/Hipoteca)", min_value=0.0, step=10.0)
-    alimentacion = st.number_input("Alimentación", min_value=0.0, step=10.0)
-    transporte = st.number_input("Transporte", min_value=0.0, step=10.0)
-with col2:
-    servicios = st.number_input("Servicios (Luz, Agua, Internet)", min_value=0.0, step=10.0)
-    ocio = st.number_input("Ocio y Entretenimiento", min_value=0.0, step=10.0)
-    otros = st.number_input("Otros Gastos", min_value=0.0, step=10.0)
+    egreso_total = vivienda + alimentacion + transporte + servicios + ocio + otros
+    saldo = ingreso - egreso_total
 
-egreso_total = vivienda + alimentacion + transporte + servicios + ocio + otros
-saldo = ingreso_total - egreso_total
-
-# --- 3. ANÁLISIS Y GRÁFICOS ---
-if st.button("📊 ANALIZAR Y PREPARAR EXCEL", type="primary", use_container_width=True):
-    if ingreso_total == 0 and egreso_total == 0:
-        st.warning("Por favor, ingresa tus valores para empezar.")
-    else:
-        st.divider()
-        
-        # Métricas principales
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Egresos Totales", f"${egreso_total:,.2f}")
-        c2.metric("Saldo Disponible", f"${saldo:,.2f}")
-        porcentaje_ahorro = (saldo / ingreso_total) * 100 if ingreso_total > 0 else 0
-        c3.metric("Capacidad de Ahorro", f"{porcentaje_ahorro:.1f}%")
-
-        # Preparar DataFrame para el Excel y Gráfico
-        datos_dict = {
-            'Categoría': ['Ingreso Total', 'Vivienda', 'Alimentación', 'Transporte', 'Servicios', 'Ocio', 'Otros', 'Saldo Final'],
-            'Monto ($)': [ingreso_total, vivienda, alimentacion, transporte, servicios, ocio, otros, saldo]
+    if st.button("📥 GUARDAR EN HISTORIAL", use_container_width=True):
+        # Crear nueva fila
+        nueva_fila = {
+            'Fecha Registro': fecha_reg.strftime('%Y-%m'),
+            'Ingresos': ingreso,
+            'Vivienda': vivienda,
+            'Alimentación': alimentacion,
+            'Transporte': transporte,
+            'Servicios': servicios,
+            'Ocio': ocio,
+            'Otros': otros,
+            'Saldo Mensual': saldo
         }
-        df_completo = pd.DataFrame(datos_dict)
+        # Añadir al historial
+        st.session_state['historial_datos'] = pd.concat([st.session_state['historial_datos'], pd.DataFrame([nueva_fila])], ignore_index=True)
+        st.success("✅ Datos guardados en el historial local.")
 
-        # Mostrar gráfico de gastos
-        df_gastos = df_completo[1:-1] # Excluimos ingreso y saldo para el gráfico
-        df_plot = df_gastos[df_gastos['Monto ($)'] > 0]
-        
-        if not df_plot.empty:
-            fig, ax = plt.subplots()
-            ax.pie(df_plot['Monto ($)'], labels=df_plot['Categoría'], autopct='%1.1f%%', startangle=90)
-            st.pyplot(fig)
+# --- 2. VISUALIZACIÓN DEL HISTORIAL ---
+if not st.session_state['historial_datos'].empty:
+    st.divider()
+    st.subheader("📜 Historial Acumulado")
+    
+    # Mostrar la tabla
+    st.dataframe(st.session_state['historial_datos'], use_container_width=True)
 
-        # --- FUNCIÓN PARA GENERAR EXCEL ---
-        def to_excel(df):
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name='Resumen_Financiero')
-            return output.getvalue()
+    # --- 3. DESCARGA EXCEL ---
+    def to_excel(df):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Mi_Historial')
+        return output.getvalue()
 
-        excel_data = to_excel(df_completo)
+    excel_data = to_excel(st.session_state['historial_datos'])
+    
+    st.download_button(
+        label="📥 DESCARGAR HISTORIAL COMPLETO (EXCEL)",
+        data=excel_data,
+        file_name=f"Historial_Financiero_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
-        st.download_button(
-            label="📥 DESCARGAR EXCEL DE GASTOS",
-            data=excel_data,
-            file_name=f"Resumen_Financiero_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
+    # Gráfico de tendencia de ingresos vs gastos
+    st.subheader("📈 Tendencia")
+    fig, ax = plt.subplots()
+    df_h = st.session_state['historial_datos']
+    ax.plot(df_h['Fecha Registro'], df_h['Ingresos'], label='Ingresos', marker='o')
+    ax.plot(df_h['Fecha Registro'], df_h['Saldo Mensual'], label='Saldo (Ahorro)', marker='s')
+    plt.xticks(rotation=45)
+    plt.legend()
+    st.pyplot(fig)
 
-        # Consejos rápidos
-        st.subheader("💡 Consejos de Optimización")
-        if saldo < 0:
-            st.error("🚨 Tus gastos superan tus ingresos. Prioriza recortar Ocio y Otros Gastos.")
-        elif porcentaje_ahorro < 20:
-            st.info("📈 Intenta reducir un 10% en Ocio para alcanzar la meta de ahorro del 20%.")
-        else:
-            st.success("🌟 ¡Excelente salud financiera! Mantén ese nivel de ahorro.")
+else:
+    st.info("Aún no hay datos guardados. Ingresa los valores arriba y dale a 'Guardar'.")
 
-# Sidebar
-st.sidebar.info("Registra tus datos y descarga el reporte en Excel para llevar tu control histórico.")
+# Botón para borrar todo
+if st.sidebar.button("🗑️ Borrar Historial"):
+    st.session_state['historial_datos'] = pd.DataFrame(columns=st.session_state['historial_datos'].columns)
+    st.rerun()
+
