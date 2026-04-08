@@ -181,7 +181,7 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
                 st.success(f"✅ **ACCIÓN RECOMENDADA:** Poner **{round(p_bajo, 2)}g** en {lim_bajo}° y **{round(p_alto, 2)}g** en {lim_alto}°")
                 # Guardar resultados en memoria temporal para subir a la nube
-                    st.session_state['data_log'] = {
+                st.session_state['data_log'] = {
                         "Fecha": datetime.now(pytz.timezone('America/Guayaquil')).strftime("%Y-%m-%d %H:%M"),
                         "Tecnico": tecnico, "Equipo": "405CR01", "Vib_Inicial": v1,
                         "Vib_Final": v_final if v_final else 0, "Peso_Total": round(peso_total, 2),
