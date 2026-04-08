@@ -255,6 +255,36 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
                 st.error("❌ Los círculos no se cortan.")
         except Exception as ex:
             st.error(f"Error: {ex}")
+# --- SECCIÓN DE VERIFICACIÓN FINAL ---
+st.divider()
+st.subheader("🏁 Verificación Post-Corrección")
+
+with st.expander("Registrar Vibración Final (Después del Balanceo)"):
+    v_final = st.number_input("Nueva Vibración Medida (mm/s)", value=None, key="v_final_val")
+    
+    if v_final is not None and v1 > 0:
+        reduccion = ((v1 - v_final) / v1) * 100
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Reducción de Amplitud", f"{reduccion:.1f}%", delta=f"{-reduccion:.1f}%", delta_color="inverse")
+        
+        with c2:
+            if v_final <= 2.8:
+                st.success("✅ **ESTADO: EXCELENTE** (Bajo Norma ISO)")
+            elif v_final <= 7.1:
+                st.warning("⚠️ **ESTADO: SATISFACTORIO**")
+            else:
+                st.error("🚨 **ESTADO: ALERTA** (Requiere revisión)")
+
+# --- CHECKBOX DE SEGURIDAD PARA CIERRE ---
+st.sidebar.divider()
+seguridad_confirmada = st.sidebar.checkbox("🔒 Protocolo LOTO ejecutado y equipo seguro")
+
+if seguridad_confirmada:
+    st.sidebar.success("Listo para operar.")
+else:
+    st.sidebar.warning("Pendiente validación de seguridad.")
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
     st.header("📋 Procedimiento de Balanceo en 4 Puntos")
