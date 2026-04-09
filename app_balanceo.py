@@ -257,26 +257,33 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
 # --- BOTÓN DE GUARDADO ---
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
-    if 'data_log' in st.session_state:
+    # Verificamos si realmente hay datos calculados
+    if 'data_log' in st.session_state and st.session_state['data_log'] is not None:
         try:
-            # Creamos la conexión sin pasarle la URL aquí para que use la de los Secrets
+            # Conexión usando los Secrets de Streamlit Cloud
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # Convertimos el log en DataFrame
-            nuevo = pd.DataFrame([st.session_state['data_log']])
+            # Convertimos el diccionario guardado en el paso anterior a DataFrame
+            nuevo_registro = pd.DataFrame([st.session_state['data_log']])
             
-            # Intentamos leer y actualizar
-            # Si tu pestaña no se llama "Hoja1", cámbialo aquí:
-            actual = conn.read(worksheet="Hoja1")
-            df_final = pd.concat([actual, nuevo], ignore_index=True)
+            # Leemos la base actual
+            # NOTA: Asegúrate que en tu Google Sheets la pestaña se llame Hoja1
+            df_actual = conn.read(worksheet="Hoja1")
             
+            # Unimos los datos nuevos a los viejos
+            df_final = pd.concat([df_actual, nuevo_registro], ignore_index=True)
+            
+            # Subimos todo de nuevo a la nube
             conn.update(worksheet="Hoja1", data=df_final)
             
             st.balloons()
-            st.success("✅ ¡Sincronizado exitosamente!")
+            st.success("✅ ¡Sincronizado exitosamente en el historial global!")
+            
         except Exception as e:
-            # Esto forzará a que salga el texto del error
-            st.error(f"Error detectado: {str(e)}")
+            # Usamos repr(e) para asegurarnos de que el error no salga en blanco
+            st.error(f"Error detallado de conexión: {repr(e)}")
+    else:
+        st.warning("⚠️ Primero debes hacer clic en 'CALCULAR BALANCEO' para generar datos.")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
