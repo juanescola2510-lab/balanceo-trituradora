@@ -260,7 +260,7 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
     if 'data_log' in st.session_state:
         try:
             # Forzamos la URL directamente aquí
-            url_hoja = "https://docs.google.com/spreadsheets/d/1gw7WoH9cZwzP_DX5f0IUZE-pule1M5FLIEfdwd8QWNk"
+            url_hoja = "https://google.com"
             
             conn = st.connection("gsheets", type=GSheetsConnection)
             
