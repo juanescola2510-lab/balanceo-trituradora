@@ -257,33 +257,43 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
 # --- BOTÓN DE GUARDADO ---
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
-    # Verificamos si realmente hay datos calculados
-    if 'data_log' in st.session_state and st.session_state['data_log'] is not None:
+    if 'data_log' in st.session_state:
         try:
-            # Conexión usando los Secrets de Streamlit Cloud
+            # Conexión con caché desactivado (ttl=0) para leer datos reales
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # Convertimos el diccionario guardado en el paso anterior a DataFrame
+            # 1. Traer los datos que ya están en la nube
+            try:
+                # Importante: ttl=0 obliga a leer lo que hay en el Excel justo ahora
+                df_existente = conn.read(worksheet="Hoja1", ttl=0)
+            except:
+                # Si la hoja está totalmente vacía, creamos un DataFrame vacío
+                df_existente = pd.DataFrame()
+
+            # 2. Preparar el nuevo registro
             nuevo_registro = pd.DataFrame([st.session_state['data_log']])
-            
-            # Leemos la base actual
-            # NOTA: Asegúrate que en tu Google Sheets la pestaña se llame Hoja1
-            df_actual = conn.read(worksheet="Hoja1")
-            
-            # Unimos los datos nuevos a los viejos
-            df_final = pd.concat([df_actual, nuevo_registro], ignore_index=True)
-            
-            # Subimos todo de nuevo a la nube
+
+            # 3. UNIR: Ponemos el nuevo registro DEBAJO del existente
+            # Si df_existente tiene datos, los combina; si no, usa solo el nuevo
+            if not df_existente.empty:
+                df_final = pd.concat([df_existente, nuevo_registro], ignore_index=True)
+            else:
+                df_final = nuevo_registro
+
+            # 4. SUBIR: Actualizamos la hoja con la lista completa aumentada
             conn.update(worksheet="Hoja1", data=df_final)
             
             st.balloons()
-            st.success("✅ ¡Sincronizado exitosamente en el historial global!")
+            st.success(f"✅ ¡Registro añadido! El historial ahora tiene {len(df_final)} filas.")
+            
+            # --- OPCIONAL: Mostrar los últimos 3 para confirmar ---
+            st.write("### Últimos registros en la nube:")
+            st.dataframe(df_final.tail(3))
             
         except Exception as e:
-            # Usamos repr(e) para asegurarnos de que el error no salga en blanco
-            st.error(f"Error detallado de conexión: {repr(e)}")
+            st.error(f"Error al actualizar historial: {e}")
     else:
-        st.warning("⚠️ Primero debes hacer clic en 'CALCULAR BALANCEO' para generar datos.")
+        st.warning("⚠️ No hay datos calculados para guardar.")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
