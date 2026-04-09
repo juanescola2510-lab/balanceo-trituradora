@@ -299,8 +299,8 @@ if v1 is not None and v_final is not None:
     with c1:
         st.metric("Reducción de Amplitud", f"{reduccion:.1f}%", delta=f"{-reduccion:.1f}%", delta_color="inverse")
     with c2:
-        if v_final <= 2.8: st.success("✅ **ESTADO: EXCELENTE**")
-        elif v_final <= 7.1: st.warning("⚠️ **ESTADO: SATISFACTORIO**")
+        if v_final <= 2: st.success("✅ **ESTADO: EXCELENTE**")
+        elif v_final <= 4.5: st.warning("⚠️ **ESTADO: SATISFACTORIO**")
         else: st.error("🚨 **ESTADO: ALERTA**")
 
 
