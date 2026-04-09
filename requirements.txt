@@ -8,3 +8,5 @@ plotly
 pandas
 openpyxl
 st-gsheets-connection
+gspread
+oauth2client
