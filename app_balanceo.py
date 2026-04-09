@@ -257,12 +257,12 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 
 # --- BOTÓN DE GUARDADO ---
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
-    if 'data_log' in st.session_state:
+    # Verificamos que existan datos y que NO estén vacíos
+    if 'data_log' in st.session_state and st.session_state['data_log'] is not None:
         try:
-            # Conexión con ttl=0 para asegurar que lee los datos más recientes de la nube
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # 1. Leer datos actuales (sin usar caché)
+            # 1. Leer datos actuales (sin caché para no perder nada)
             try:
                 df_existente = conn.read(worksheet="Hoja1", ttl=0)
             except:
@@ -271,23 +271,26 @@ if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
             # 2. Crear el nuevo registro
             nuevo_registro = pd.DataFrame([st.session_state['data_log']])
 
-            # 3. Concatenar (Poner el nuevo DEBAJO de los anteriores)
+            # 3. Concatenar (Nuevo registro al final)
             if not df_existente.empty:
                 df_final = pd.concat([df_existente, nuevo_registro], ignore_index=True)
             else:
                 df_final = nuevo_registro
 
-            # 4. Actualizar la hoja de Google con la lista completa
+            # 4. Actualizar Google Sheets
             conn.update(worksheet="Hoja1", data=df_final)
             
-            # 5. Feedback visual discreto
             st.balloons()
-            st.success("✅ ¡Sincronizado con el historial global exitosamente!")
+            st.success("✅ ¡Sincronizado exitosamente!")
+
+            # --- PASO CLAVE: LIMPIAR LA MEMORIA DESPUÉS DE GUARDAR ---
+            st.session_state['data_log'] = None 
             
         except Exception as e:
-            st.error(f"Error al guardar datos: {e}")
+            st.error(f"Error al guardar: {e}")
     else:
-        st.warning("⚠️ Primero realice los cálculos para poder guardar.")
+        # Si el usuario presiona el botón otra vez sin haber calculado nada nuevo:
+        st.warning("⚠️ Los datos ya fueron guardados o no se han generado nuevos cálculos.")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
