@@ -14,7 +14,7 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-
+st.write("¿Secretos cargados?:", "connections" in st.secrets)
 
 # Configuración de la interfaz
 st.set_page_config(page_title="Balanceo Trituradora 405CR01", layout="centered")
