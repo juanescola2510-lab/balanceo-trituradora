@@ -259,28 +259,24 @@ if st.button("⚖️ CALCULAR BALANCEO", type="primary", use_container_width=Tru
 if st.button("☁️ GUARDAR EN HISTORIAL GLOBAL", use_container_width=True):
     if 'data_log' in st.session_state:
         try:
-            # 1. USAR LA URL REAL DE TU HOJA (La misma que pusiste en Secrets)
-            url_hoja = "https://docs.google.com/spreadsheets/d/1gw7WoH9cZwzP_DX5f0IUZE-pule1M5FLIEfdwd8QWNk"
-            
+            # Creamos la conexión sin pasarle la URL aquí para que use la de los Secrets
             conn = st.connection("gsheets", type=GSheetsConnection)
             
-            # 2. Preparamos el nuevo dato
+            # Convertimos el log en DataFrame
             nuevo = pd.DataFrame([st.session_state['data_log']])
             
-            # 3. Leemos y actualizamos usando la URL correcta y el nombre de la hoja
-            # Cambia "Hoja1" por el nombre que tenga tu pestaña abajo en el Excel
-            actual = conn.read(spreadsheet=url_hoja, worksheet="Hoja1")
+            # Intentamos leer y actualizar
+            # Si tu pestaña no se llama "Hoja1", cámbialo aquí:
+            actual = conn.read(worksheet="Hoja1")
             df_final = pd.concat([actual, nuevo], ignore_index=True)
             
-            conn.update(spreadsheet=url_hoja, worksheet="Hoja1", data=df_final)
+            conn.update(worksheet="Hoja1", data=df_final)
             
             st.balloons()
-            st.success("✅ ¡Sincronizado con Google Sheets exitosamente!")
-            
+            st.success("✅ ¡Sincronizado exitosamente!")
         except Exception as e:
-            st.error(f"Error detallado: {e}")
-    else:
-        st.warning("No hay datos nuevos para guardar.")
+            # Esto forzará a que salga el texto del error
+            st.error(f"Error detectado: {str(e)}")
 
 # --- SECCIÓN DE VERIFICACIÓN FINAL EN PANTALLA ---
 if v1 is not None and v_final is not None:
