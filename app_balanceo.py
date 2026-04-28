@@ -307,7 +307,7 @@ if v1 is not None and v_final is not None:
 
 # --- PESTAÑA 2: PROCEDIMIENTO ---
 with tab2:
-    st.header("📋 Procedimiento de Balanceo en 4 Puntos")
+    st.header("📋 Procedimiento de Balanceo en 4 Corridas sin fase")
     
     st.subheader("⚠️ Protocolo de Seguridad Obligatorio")
     st.error("""
