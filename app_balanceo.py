@@ -327,8 +327,8 @@ with tab2:
     ### 2. Colocación de Pesos de Prueba
     Se deben realizar 3 mediciones adicionales colocando un peso conocido en ángulos específicos, se recomienda utilizar un peso mayor a 1000 gramos:
     *   **Medición V2:** Coloque el peso de prueba en **0°** y anote el valor de la vibración en V2.
-    *   **Medición V3:** Coloque el peso de prueba en uno de estos ángulos **72°/144°/216°/288°** y anote el valor de la vibración en V3.
-    *   **Medición V4:** Coloque el peso de prueba en uno de estos ángulos pero que no sea el mismo de la medición V3 **72°/144°/216°/288°** y anote el valor de la vibración en V4.
+    *   **Medición V3:** Coloque el peso de prueba en uno de estos ángulos **144°** y anote el valor de la vibración en V3.
+    *   **Medición V4:** Coloque el peso de prueba en uno de estos ángulos pero que no sea el mismo de la medición V3 **288°** y anote el valor de la vibración en V4.
     *   *Nota: Asegúrese de retirar el peso anterior antes de colocar el siguiente.*
     
     ### 3. Ingreso de Datos
